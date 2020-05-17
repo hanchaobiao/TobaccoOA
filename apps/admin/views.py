@@ -14,7 +14,6 @@ from module.DepartmentDb import DepartmentModel
 from common.response import json_response
 from apps.utils.jwt_login_decorators import admin_login_req
 from resources.redis_pool import RedisPool
-from apps.admin_operation.views import BaseResource
 
 
 from ..admin.forms import *
@@ -50,6 +49,14 @@ class LogoutView(Resource):
         """
         RedisPool().set_offline_status(request.user['id'])
         return json_response(message='退出成功')
+
+
+class AdminRoleView(Resource):
+
+    @staticmethod
+    def get():
+        result = AdminModel().get_all_role_list()
+        return json_response(data=result)
 
 
 class AdminLoginLogView(Resource):
@@ -136,7 +143,7 @@ class UpdatePasswordView(Resource):
             return json_response(errors=form.errors)
 
 
-class AdminManageView(BaseResource):
+class AdminManageView(Resource):
     """
     员工信息管理
     """
@@ -166,11 +173,22 @@ class AdminManageView(BaseResource):
         form = AddAdminForm().from_json(request.json)
         if form.validate():
             model = AdminModel()
-            result = model.add_admin(form.data)
-            if result['code'] == 0:
-                admin = result['data']
-                self.insert_log(self.__table__, admin['id'], "新增用户：{}".format(admin['real_name']), admin)
-            return json_response(**result)
+            try:
+                model.set_autocommit(0)
+                result = model.add_admin(form.data)
+                if result['code'] == 0:
+                    admin = result['data']
+                    model.insert_log(self.__table__, admin['id'], "新增用户：{}".format(admin['real_name']), admin)
+                model.conn.commit()
+                model.set_autocommit(1)
+                return json_response(**result)
+            except Exception as e:
+                print(e)
+                import traceback
+                traceback.print_exc()
+                model.conn.rollback()
+                model.set_autocommit(1)
+                return json_response(code="FAIL", message="修改失败", data={})
         else:
             return json_response(code="FAIL", message="表单验证异常", errors=form.errors)
 
@@ -181,16 +199,25 @@ class AdminManageView(BaseResource):
             model = AdminModel()
             user = model.get_admin_by_id(form.data['id'])
             if user:
-                if form.data['password']:
-                    form.password.data = model.get_md5_password(form.password.data)
-                else:
-                    del form.data['password']
-                count = model.update_execute(model.table_name, **form.data)
-                if count:
+                data = dict(form.data)
+                try:
+                    model.set_autocommit(0)
+                    result = model.update_admin(user, data)
+                    if result['code'] == 1:
+                        return {"code": 1, "message": "用户名已被使用，请重新输入"}
                     RedisPool().set_offline_status(form.data['id'])  # 设置离线
-                    self.update_log(self.__table__, user['id'], "修改用户：{}".format(user['real_name']),
-                                    user, form.data)
-                return json_response(data=form.data)
+                    model.update_log(self.__table__, user['id'], "修改用户：{}".format(user['real_name']),
+                                     user, form.data)
+                    model.conn.commit()
+                    model.set_autocommit(1)
+                    return json_response(**result)
+                except Exception as e:
+                    print(e)
+                    import traceback
+                    traceback.print_exc()
+                    model.conn.rollback()
+                    model.set_autocommit(1)
+                    return json_response(code="FAIL", message="修改失败", data={})
             else:
                 return json_response(code=1, message="用户不存在")
         else:
@@ -210,7 +237,7 @@ class AdminManageView(BaseResource):
             RedisPool().set_offline_status(args['id'])  # 设置离线
             count = model.delete_admin(args['id'])
             if count:
-                self.delete_log(self.__table__, user['id'], "删除用户：{}".format(user['real_name']), user)
+                model.delete_log(self.__table__, user['id'], "删除用户：{}".format(user['real_name']), user)
             return json_response(data=user)
         else:
             return json_response(code=1, message="用户不存在")

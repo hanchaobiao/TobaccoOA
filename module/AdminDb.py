@@ -46,6 +46,18 @@ class AdminModel(BaseDb):
         admin = self.dict_cur.fetchone()
         return admin
 
+    def get_admin_by_ids(self, ids):
+        """
+        获取用户信息
+        :param ids:
+        :return:
+        """
+        ids = str(tuple(set(ids))).replace(",)", ")")
+        sql = "SELECT id, real_name FROM sys_admin WHERE id in %s" % ids
+        self.dict_cur.execute(sql)
+        result = self.dict_cur.fetchall()
+        return result
+
     def get_admin_detail(self, admin):
         """
         :param admin:
@@ -249,7 +261,8 @@ class AdminModel(BaseDb):
         sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, add_time, "\
               "department_id, dict_department.name as department, dict_department.leader_id, dict_department.level " \
               "FROM sys_admin LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
-              "WHERE sys_admin.is_delete=0"
+              "WHERE sys_admin.is_delete=0 "
+        print(sql)
         if real_name:
             sql += " AND real_name like '%{}%' ".format(real_name.strip())
         if department_id:
@@ -260,10 +273,38 @@ class AdminModel(BaseDb):
         if start_date and end_date:
             sql += " AND DATE_FORMAT(add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
         result = self.query_paginate(sql, page=page, page_size=page_size)
+        if len(result['list']) == 0:
+            return result
+        ids = [item['id'] for item in result['list']]
+        sql = "SELECT DISTINCT admin_id, role_id, role_name, level FROM rel_sys_admin_role JOIN sys_admin_role ON " \
+              "rel_sys_admin_role.role_id=sys_admin_role.id " \
+              "WHERE admin_id IN %s ORDER BY level DESC" % str(tuple(ids)).replace(",)", ")")
+        self.dict_cur.execute(sql)
+        admin_roles = self.dict_cur.fetchall()
         redis = RedisPool()
         for user in result['list']:
+            user['roles'] = [role for role in admin_roles if role['admin_id'] == user['id']]
             user['is_online'] = redis.check_online_status(user['id'])
         return result
+
+    def get_admin_by_department_role(self, department_id, role_id):
+        """
+        根据部门或权限搜索人员
+        :param department_id:
+        :param role_id:
+        :return:
+        """
+        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin "
+        constraints = []
+        if role_id:
+            sql += " JOIN rel_sys_admin_role ON admin_id=sys_admin.id "
+            constraints.append(f"role_id={role_id}")
+        if department_id:
+            constraints.append(f"department_id={department_id}")
+        sql = self.append_query_conditions(sql, constraints)
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        return rows
 
     def add_admin(self, admin):
         """
@@ -272,34 +313,52 @@ class AdminModel(BaseDb):
         :return:
         """
         try:
+            role_ids = admin.pop("role_ids")
             user = self.get_admin_by_username(admin['username'])
             if user:
                 return {"code": 1, "message": "用户名已被使用，请重新输入"}
             admin['password'] = self.get_md5_password(admin['password'])
             admin['add_time'] = datetime.datetime.now()
             admin['id'] = self.execute_insert(self.table_name, **admin)
-            return {"code": 0, "data": admin}
+            insert_list = [(admin['id'], role_id) for role_id in role_ids]
+            sql = "INSERT INTO rel_sys_admin_role(admin_id, role_id, add_time) VALUES(%s,%s,now()) "
+            self.dict_cur.executemany(sql, insert_list)
+            return {"code": 0, "message": "添加成功"}
         except pymysql.err.IntegrityError:
             return {"code": 1, "message": "该用户名已被使用"}
 
-    def update_admin(self, admin):
+    def update_admin(self, origin_data, update_data):
         """
         修改员工
-        :param admin:
+        :param origin_data:
+        :param update_data:
         :return:
         """
         try:
-            user = self.get_admin_by_username(admin['username'])
-            if user:
-                return {"code": 1, "message": "用户名已被使用，请重新输入"}
-            admin['password'] = self.get_md5_password(admin['password'])
-            sql = "INSERT INTO sys_admin({}, add_time) VALUES({}, now())"
-            sql = self.sql_fill_column(sql, **admin)
-            self.dict_cur.execute(sql, tuple(admin.values()))
-            admin['id'] = self.dict_cur.lastrowid
-            return {"code": 0, "data": admin}
+            role_ids = update_data.pop("role_ids")
+            if update_data['password']:
+                update_data['password'] = self.get_md5_password(update_data['password'])
+            else:
+                del update_data['password']
+            self.execute_update('sys_admin', update_data, origin_data)
+            self.update_admin_role(update_data, role_ids)
+            return {"code": 0, "data": update_data}
         except pymysql.err.IntegrityError:
             return {"code": 1, "message": "该用户名已被使用"}
+
+    def update_admin_role(self, admin, role_ids):
+        """
+        修改角色
+        :param admin:
+        :param role_ids:
+        :return:
+        """
+        sql = "DELETE FROM rel_sys_admin_role WHERE admin_id=%s AND role_id NOT IN %s" % \
+              (admin['id'], str(tuple(role_ids)).replace(",)", ")"))
+        self.dict_cur.execute(sql)
+        sql = "INSERT IGNORE INTO rel_sys_admin_role(admin_id, role_id, add_time) VALUES(%s,%s,now())"
+        insert_list = [(admin['id'], role_id) for role_id in role_ids]
+        self.dict_cur.executemany(sql, insert_list)
 
     def delete_admin(self, admin_id):
         """
@@ -310,6 +369,16 @@ class AdminModel(BaseDb):
         sql = "UPDATE sys_admin SET is_delete=1 WHERE id=%s"
         count = self.dict_cur.execute(sql, admin_id)
         return count
+
+    def get_all_role_list(self):
+        """
+        获取全部角色列表
+        :return:
+        """
+        sql = "SELECT * FROM sys_admin_role"
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        return rows
 
 
 if __name__ == "__main__":

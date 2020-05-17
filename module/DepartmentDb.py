@@ -1,15 +1,6 @@
-import time
 import datetime
-import hashlib
-
-import jwt
-import pymysql
-from flask import request
-from pymysql import escape_string
 
 from resources.base import BaseDb
-from resources.redis_pool import RedisPool
-from settings import JWT_EXPIRE, SECRET_KEY
 
 
 class DepartmentModel(BaseDb):
@@ -42,11 +33,6 @@ class DepartmentModel(BaseDb):
         self.dict_cur.execute(sql, user_id)
         return self.dict_cur.fetchone()['num']
 
-    @staticmethod
-    def department_tree(departments):
-        for item in departments:
-            pass
-
     def generate_department_tree(self, pid, departments):
         """
         生成菜单: 递归
@@ -72,7 +58,9 @@ class DepartmentModel(BaseDb):
             departments2 = [item for item in self.departments if item['pid'] == pid]
             # 还有子菜单
             if len(departments):
-                sub['children'] = self.generate_department_tree(sub['id'], departments)
+                children_ = self.generate_department_tree(sub['id'], departments2)
+                if len(children_):
+                    sub['children'] = children_
         # 子菜单列表不为空
         if len(children):
             return children
@@ -85,13 +73,18 @@ class DepartmentModel(BaseDb):
         :param pid:
         :return:
         """
+        print(pid)
         sql = " SELECT id, name, level, leader_id, pid FROM dict_department WHERE is_delete=0 "
         if pid:
-            sql += " WHERE path like '{pid},%' or path like '%,{pid},%' or path like '%,{pid}'".format(pid=pid)
+            sql += " AND (id={pid} or path like '{pid},%' or path like '%,{pid},%' or path like '%,{pid}')".format(pid=pid)
         self.dict_cur.execute(sql)
-        rows = self.dict_cur.fetchall()
-        tree = self.generate_department_tree(pid, rows)
-        return tree
+        departments = self.dict_cur.fetchall()
+        self.departments = departments
+        root_departments = [item for item in departments if item['pid'] == pid]
+        for root in root_departments:
+            children = [item for item in departments if item['pid'] == root['id']]
+            root['children'] = self.generate_department_tree(root['id'], children)
+        return root_departments
 
     def get_department_by_id(self, department_id):
         """

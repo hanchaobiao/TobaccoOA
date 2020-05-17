@@ -9,5 +9,6 @@ from apps.admin_operation.views import *
 
 
 api.add_resource(UseAdminView, "/useAdmin")
+api.add_resource(AdminSelectView, "/admin/select")
 api.add_resource(DepartmentView, "/department")
 api.add_resource(FileManageView, "/fileManage")

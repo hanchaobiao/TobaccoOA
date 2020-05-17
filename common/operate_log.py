@@ -58,13 +58,14 @@ class AdminOperateLog(object):
               " old_value) VALUES(%s, %s, %s, %s, %s)"
         self.dict_cur.executemany(sql, field_list)
 
-    def insert_log(self, table_name, table_id, desc, insert_data=None, ):
+    def insert_log(self, table_name, table_id, desc, insert_data=None, extra_fields=[]):
         """
         新增操作日志记录
         :param table_name:
         :param table_id:
         :param desc:
         :param insert_data:
+        :param extra_fields: [{"name": "", "value": "", "desc": ""}]
         :return:
         """
         table_comment = self.query_column_comment(table_name)
@@ -77,6 +78,8 @@ class AdminOperateLog(object):
         for key, val in insert_data.items():
             if table_comment.get(key):
                 field_list.append([insert_id, key, table_comment[key], val, None])
+        for item in extra_fields:
+            field_list.append([insert_id, item['name'], item['desc'], item['value'], None])
         self.insert_operate_detail_log(field_list)
 
     def update_log(self, table_name, table_id, desc, origin_data, new_data=None):

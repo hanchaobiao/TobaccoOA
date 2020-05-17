@@ -14,3 +14,5 @@ flask_restful
 python-docx
 PyJWT
 wtforms
+uwsgi
+wtforms_json

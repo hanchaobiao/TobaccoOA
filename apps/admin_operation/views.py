@@ -9,6 +9,7 @@ import datetime
 import hashlib
 from copy import deepcopy
 
+import pymysql
 from flask import request, make_response
 from flask_restful import Resource, reqparse
 from apps import MEDIA_PATH
@@ -23,14 +24,14 @@ from resources.redis_pool import RedisPool
 
 from flask_restful import Resource
 
-from common.operate_log import AdminOperateLog
+from resources.base import BaseDb
 
 
-class BaseResource(Resource, AdminOperateLog):
+class BaseResource(Resource, BaseDb):
 
     def __init__(self):
         Resource.__init__(self)
-        AdminOperateLog.__init__(self)
+        self.db = BaseDb.__init__(self)
 
 
 class UseAdminView(Resource):
@@ -49,7 +50,18 @@ class UseAdminView(Resource):
         return json_response(code=0, data=result)
 
 
-class DepartmentView(BaseResource):
+class AdminSelectView(Resource):
+
+    @staticmethod
+    def get():
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=str, help='类型', required=False, default=None)
+        parser.add_argument("role_id", type=str, help='类型', required=False, default=None)
+        args = parser.parse_args()
+        result = AdminModel().get_admin_by_department_role(args['department_id'], args['role_id'])
+        return json_response(code=0, data=result)
+
+class DepartmentView(Resource):
     """
     部门管理
     """
@@ -61,7 +73,7 @@ class DepartmentView(BaseResource):
     @admin_login_req
     def get():
         parser = reqparse.RequestParser()
-        parser.add_argument("pid", type=int, help='部门id', required=False, default=None)
+        parser.add_argument("pid", type=int, help='部门id', required=False, default=1)
         args = parser.parse_args()
         model = DepartmentModel()
         result = model.get_department_tree(args['pid'])
@@ -76,8 +88,8 @@ class DepartmentView(BaseResource):
             if department:
                 return json_response(code=1, message="部门名称已被使用")
             department = model.add_department(form.data)
-            self.insert_log(self.__table__, department['id'], desc='添加部门：{}'.format(form.data['name']),
-                            insert_data=department)
+            model.insert_log(self.__table__, department['id'], desc='添加部门：{}'.format(form.data['name']),
+                             insert_data=department)
             return json_response(data=department)
         else:
             return json_response(code=1, errors=form.errors)
@@ -98,8 +110,8 @@ class DepartmentView(BaseResource):
                     return json_response(code=1, message='数据未修改')
                 new_data = deepcopy(department)
                 new_data.update(form.data)
-                self.update_log(self.__table__, department['id'], desc="修改部门：{}".format(department['name']),
-                                origin_data=department, new_data=new_data)
+                model.update_log(self.__table__, department['id'], desc="修改部门：{}".format(department['name']),
+                                 origin_data=department, new_data=new_data)
                 return json_response(data=new_data)
             else:
                 return json_response(code=1, message='部门不存在')
@@ -121,24 +133,18 @@ class DepartmentView(BaseResource):
         department = model.get_department_by_id(args['id'])
         if department:
             model.delete_department(args['id'])
-            self.delete_log(self.__table__, department['id'], '删除部门：{}'.format(department['name']), department)
+            model.delete_log(self.__table__, department['id'], '删除部门：{}'.format(department['name']), department)
             return json_response(data=department)
         else:
             return json_response(code=1, message='部门不存在')
 
 
-class FileManageView(BaseResource):
+class FileManageView(Resource):
     """
     文件管理
     """
 
     __table__ = 'sys_file_manage'
-
-    @staticmethod
-    def allowed_file(filename):
-        if filename.split(".")[-1] not in ["jpg", "jpeg", "png", "gif", "doc", "docx", "xls", "xlsx", "pdf"]:
-            return False
-        return True
 
     @admin_login_req
     def get(self):
@@ -161,26 +167,27 @@ class FileManageView(BaseResource):
         if 'file' not in request.files:
             return json_response(code=1, message='请选择文件')
         model = FileManageModel()
-        for f in request.files.getlist('file'):
-            file_info = dict()
-            # 检查文件类型
-            now_time = datetime.datetime.now()
-            file_info['format'] = f.filename.split(".")[-1]
-            file_info['file_name'] = f.filename.replace(".{}".format(file_info['format']), '')
-            file_info['size'] = len(f.read())
-            if f and self.allowed_file(f.filename):
-                new_filename = str(now_time).replace(" ", '-') + '_' + f.filename
-                base_bath = os.path.join(MEDIA_PATH, file_info['format'])
-                if os.path.exists(base_bath) is False:
-                    os.mkdir(base_bath)
-                file_path = os.path.join(base_bath, new_filename)
-                f.save(file_path)
+        file_list = []
+        try:
+            model.set_autocommit(0)
+            for f in request.files.getlist('file'):
+                file_info = dict()
+                # 检查文件类型
                 file_info['admin_id'] = request.user['id']
-                file_info['add_time'] = now_time
-                file_info['file_path'] = file_path.replace(MEDIA_PATH, '')
-                model.insert_file_info(file_info)
-                self.insert_log(self.__table__, file_info['id'], "上传文件：{}".format(f.filename), file_info)
-        return json_response(code=1, message="上传成功")
+                file_info = model.insert_file_info(file_info, f)
+                file_list.append(file_info)
+                model.insert_log(self.__table__, file_info['id'], "上传文件：{}".format(f.filename), file_info)
+            model.conn.commit()
+            model.set_autocommit(1)
+            return json_response(code=0, message="上传成功", data=file_list)
+        except pymysql.err.IntegrityError:
+            message = "文件名:{}已存在".format(f.filename)
+        except Exception as e:
+            print(e)
+            message = str(e)
+            model.conn.rollback()
+            model.set_autocommit(1)
+        return json_response(code=1, message=message)
 
     @admin_login_req
     def put(self):
@@ -191,10 +198,10 @@ class FileManageView(BaseResource):
         model = FileManageModel()
         file_info = model.get_file_by_id(args['id'])
         if file_info:
-            num = model.update_execute(self.__table__, **args)
+            num = model.execute_update(self.__table__, args)
             if num:
                 message = '修改文件名称{}->{}'.format(file_info['file_name'], args['file_name'])
-                self.update_log(self.__table__, file_info['id'], message, file_info, args)
+                model.update_log(self.__table__, file_info['id'], message, file_info, args)
                 return json_response(data=args)
             else:
                 return json_response(code=1, message="文件名未改变")
@@ -202,13 +209,13 @@ class FileManageView(BaseResource):
             return json_response(code=1, message='文件不存在')
 
 
-class DownloadFileView(BaseResource):
+class DownloadFileView(Resource):
     """
     下载文件
     """
 
-
-    def post(self):
+    @staticmethod
+    def post():
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='文件id', required=True)
         args = parser.parse_args()

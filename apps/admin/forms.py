@@ -7,7 +7,7 @@
 import re
 
 from wtforms import Form
-from wtforms import StringField, IntegerField, FileField, BooleanField
+from wtforms import StringField, IntegerField, FileField, MultipleFileField
 from wtforms.validators import DataRequired, Regexp, Length, AnyOf, Email, ValidationError, NumberRange
 
 
@@ -35,6 +35,7 @@ class AddAdminForm(Form):
     is_disable = IntegerField("是否禁用", validators=[AnyOf([0, 1])])
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                         Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
+    role_ids = MultipleFileField("角色", validators=[DataRequired("请选择角色")])
 
 
 class UpdateAdminForm(Form):
@@ -50,6 +51,7 @@ class UpdateAdminForm(Form):
     is_disable = IntegerField("是否禁用", validators=[AnyOf([0, 1])])
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                                             Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
+    role_ids = MultipleFileField("角色", validators=[DataRequired("请选择角色")])
 
     # noinspection PyMethodMayBeStatic
     def validate_password(self, field):

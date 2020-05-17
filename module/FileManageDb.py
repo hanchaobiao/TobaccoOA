@@ -1,15 +1,13 @@
-import time
-import datetime
-import hashlib
+import os
 
-import jwt
-import pymysql
-from flask import request
+import datetime
+
+import requests
 from pymysql import escape_string
 
+from apps import MEDIA_PATH
+from settings import MEDIA_PREFIX
 from resources.base import BaseDb
-from resources.redis_pool import RedisPool
-from settings import JWT_EXPIRE, SECRET_KEY
 
 
 class FileManageModel(BaseDb):
@@ -62,26 +60,47 @@ class FileManageModel(BaseDb):
         if file_name:
             sql += " AND file_name like '%{}%' ".format(escape_string(file_name.strip()))
         if file_format:
-            sql += " file_format = '{}' ".format(escape_string(file_format))
+            sql += " AND format = '{}' ".format(escape_string(file_format))
         if admin_id:
             sql += " AND admin_id={} ".format(admin_id)
         if start_date and end_date:
             sql += " AND DATE_FORMAT(file.add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
         result = self.query_paginate(sql, page=page, page_size=page_size)
         for res in result['list']:
+            res['url'] = os.path.join(MEDIA_PATH, res['file_path'])
             if res['size']/1024 < 1024:
                 res['size'] = str(round(res['size']/1024, 2))+'KB'
             else:
                 res['size'] = str(round(res['size']/1024/1024, 2)) + 'MB'
         return result
 
-    def insert_file_info(self, file_info):
+    @staticmethod
+    def allowed_file(filename):
+        if filename.split(".")[-1] not in ["jpg", "jpeg", "png", "gif", "doc", "docx", "xls", "xlsx", "pdf"]:
+            return False
+        return True
+
+    def insert_file_info(self, file_info, f):
         """
         添加文件信息
         :param file_info:
         :return:
         """
-        file_info['id'] = self.execute_insert(self.table_name, **file_info)
+        now_time = datetime.datetime.now()
+        file_info['format'] = f.filename.split(".")[-1]
+        file_info['file_name'] = f.filename.replace(".{}".format(file_info['format']), '')
+        file_info['size'] = len(f.read())
+        if f and self.allowed_file(f.filename):
+            new_filename = str(now_time).replace(" ", '-') + '_' + f.filename
+            base_bath = os.path.join(MEDIA_PATH, file_info['format'])
+            if os.path.exists(base_bath) is False:
+                os.mkdir(base_bath)
+            file_path = os.path.join(base_bath, new_filename)
+            f.save(file_path)
+            file_info['add_time'] = now_time
+            file_info['file_path'] = file_path.replace(MEDIA_PATH, '')
+            file_info['id'] = self.execute_insert(self.table_name, **file_info)
+            file_info['url'] = os.path.join(MEDIA_PATH, file_info['file_path'])
         return file_info
 
 
