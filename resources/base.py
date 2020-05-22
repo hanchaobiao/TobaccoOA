@@ -128,6 +128,20 @@ class BaseDb(object):
     def set_autocommit(self, flag):
         self.dict_cur.execute("set autocommit = {}".format(flag))
 
+    def start_transaction(self):
+        """
+        开启事务,set autocommit=0指事务非自动提交，自此句执行以后，每个SQL语句或者语句块所在的事务都需要显示"commit"才能提交事务。
+        1、不管autocommit 是1还是0
+        START TRANSACTION 后，只有当commit数据才会生效，ROLLBACK后就会回滚。
+        2、当autocommit 为 0 时
+        不管有没有START TRANSACTION。
+        只有当commit数据才会生效，ROLLBACK后就会回滚。
+        3、如果autocommit 为1 ，并且没有START TRANSACTION 。
+        调用ROLLBACK是没有用的。即便设置了SAVEPOINT。
+        :return:
+        """
+        self.dict_cur.execute("start transaction")
+
     @staticmethod
     def append_query_conditions(sql, conditions):
         if len(conditions) == 0:
@@ -168,6 +182,8 @@ class BaseDb(object):
         :param data_list:
         :return:
         """
+        if len(data_list) == 0:
+            return None
         kwargs = data_list[0]
         value_list = [tuple(item.values()) for item in data_list]
         sql = "INSERT INTO {}({}) VALUES({})".format(table_name, ','.join(list(kwargs.keys())),
@@ -239,19 +255,15 @@ class BaseDb(object):
         count = self.dict_cur.execute(sql)
         return count
 
-    def execute_delete(self, table_name, table_id, extra_conditions=[]):
+    def execute_delete(self, table_name, conditions=[]):
         """
         删除
         :param table_name:
-        :param table_id:
-        :param extra_conditions:
+        :param conditions:
         :return:
         """
-        if isinstance(table_id):
-            sql = "DELETE FROM {} WHERE id={} ".format(table_name, table_id)
-        else:
-            sql = "DELETE FROM {} WHERE id IN {} ".format(table_name, str(tuple(table_id)).replace(",)", ")"))
-        if len(extra_conditions) > 0:
-            sql += " AND " + " AND ".join(extra_conditions)
+        sql = f"DELETE FROM {table_name} "
+        if len(conditions) > 0:
+            sql += " WHERE " + " AND ".join(conditions)
         count = self.dict_cur.execute(sql)
         return count

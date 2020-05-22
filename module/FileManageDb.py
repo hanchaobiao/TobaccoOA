@@ -2,7 +2,7 @@ import os
 
 import datetime
 
-import requests
+from urllib import parse
 from pymysql import escape_string
 
 from apps import MEDIA_PATH
@@ -67,7 +67,7 @@ class FileManageModel(BaseDb):
             sql += " AND DATE_FORMAT(file.add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
         result = self.query_paginate(sql, page=page, page_size=page_size)
         for res in result['list']:
-            res['url'] = os.path.join(MEDIA_PATH, res['file_path'])
+            res['url'] = parse.urljoin(MEDIA_PATH, res['file_path'])
             if res['size']/1024 < 1024:
                 res['size'] = str(round(res['size']/1024, 2))+'KB'
             else:
@@ -100,7 +100,7 @@ class FileManageModel(BaseDb):
             file_info['add_time'] = now_time
             file_info['file_path'] = file_path.replace(MEDIA_PATH, '')
             file_info['id'] = self.execute_insert(self.table_name, **file_info)
-            file_info['url'] = os.path.join(MEDIA_PATH, file_info['file_path'])
+            file_info['url'] = parse.urljoin(MEDIA_PATH, file_info['file_path'])
         return file_info
 
 

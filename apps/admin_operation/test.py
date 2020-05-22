@@ -23,9 +23,9 @@ def department_test():
     response = requests.get(f"{web_url}/department", headers=headers, params={"pid": 1})
     print(response.text)
 
-    # data = {"name": "襄城分局", "pid": 1, "leader_id": 1}
-    # response = requests.post(f"{web_url}/department", headers=headers, json=data)
-    # print(response.text)
+    data = {"name": "", "pid": 1, "leader_id": 1}
+    response = requests.post(f"{web_url}/department", headers=headers, json=data)
+    print(response.text)
 
     # data = {"id": 42, "name": "襄城分局", "leader_id": 2}
     # response = requests.put(f"{web_url}/department", headers=headers, json=data)

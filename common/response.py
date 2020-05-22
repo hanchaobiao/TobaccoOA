@@ -40,10 +40,12 @@ def json_response(code=0, message="请求成功", data={}, errors={}, status_cod
     """
     if code == 1 and message == '请求成功':
         message = '请求失败'
+    print(errors)
     if errors:
         code = 1
-        for item in errors.items():
-            message = item[0]
+        for key, val in errors.items():
+            message = val[0]
+            break
     result = {"code": code, "message": message, "data": data, "errors": errors}
     response = make_response(json.dumps(result, ensure_ascii=False, default=json_serial), status_code)
     response.content_type = 'application/json; charset=utf-8'

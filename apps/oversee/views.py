@@ -20,6 +20,8 @@ from common.response import json_response
 from apps.utils.db_transaction import db_transaction
 from apps.utils.jwt_login_decorators import admin_login_req
 from resources.redis_pool import RedisPool
+from apps.oversee.task import send_sys_message
+from apps.admin_operation.task import upload_file
 
 
 class ReleaseOverseeTaskView(Resource):
@@ -36,9 +38,12 @@ class ReleaseOverseeTaskView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help='任务名称', required=False, default=None)
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
-        parser.add_argument("type", type=str, help='任务状态', choices=['重大任务', '专项任务', '普通任务'], required=False,
-                            default=None)
-        parser.add_argument("relation", type=str, help='任务关系', required=False, default=None)
+        parser.add_argument("status", type=str, help='执行状态', choices=['', '待签收', '待审核', '审核拒绝', '已完成'],
+                            required=False, default=None)
+        parser.add_argument("type", type=str, help='任务类型', choices=['', '重大任务', '专项任务', '普通任务', '常规状态'],
+                            required=False, default=None)
+        parser.add_argument("relation", type=str, help='任务关系', choices=['', '由我发布', '由我经办', '由我督办', '由我协办'],
+                            required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
         parser.add_argument("page_size", type=int, help='页数', required=False, default=20)
         args = parser.parse_args()
@@ -58,35 +63,43 @@ class ReleaseOverseeTaskView(Resource):
     def post(self):
         form = AddOverseeTaskForm().from_json(request.json)
         if form.validate():
-            data = dict(form.data)
-            data['add_time'] = datetime.datetime.now()
-            task_detail_list = data.pop("oversee_details")
+            task = dict(form.data)
+            task['status'] = '待签收'
+            task['add_time'] = datetime.datetime.now()
+            task_detail_list = task.pop("oversee_details")
             model = OverseeTaskModel()
-            model.set_autocommit(0)
             try:
-                file_ids = data.pop("file_ids")
-                data['release_id'] = request.user['id']
-                task = model.execute_insert(self.__table__, data)
+                model.start_transaction()
+                oversee_messages = []
+                file_ids = task.pop("file_ids")
+                task['release_id'] = request.user['id']
+                task['id'] = model.execute_insert(self.__table__, **task)
                 file_list = [{"file_id": file_id, "task_id": task['id']} for file_id in file_ids]
                 model.execute_insert_many('rel_task_file', file_list)
+                now_time = datetime.datetime.now()
+                oversee_messages.append({"type": "待签收", "send_time": now_time, "task_id": task['id'],
+                                         "receive_id": task['oversee_id'], "task_detail_id": None,
+                                         "title": "督办任务：{}待签收".format(task['name'])})
                 model.insert_log(self.__table__, task['id'], '发布督办任务：{}'.format(task['name']), task)
                 for index, task_detail in enumerate(task_detail_list):
                     coordinator_ids = task_detail.pop("coordinator_ids")
                     task_detail = model.add_oversee_task_detail(task['id'], task_detail)
-                    self.insert_log('oversee_task_detail', task_detail['id'],
-                                    '督办任务：{}子任务：{}'.format(task['name'], index+1), task_detail,
-                                    [{"name": "coordinator_ids", "desc": "协办人", "value": str(coordinator_ids)}])
+                    oversee_messages.append({"type": "待签收", "send_time": now_time, "task_id": task['id'],
+                                             "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
+                                             "title": "督办任务：{}->第{}阶段任务待签收".format(task['name'], index+1)})
+                    model.insert_log('oversee_task_detail', task_detail['id'],
+                                     '督办任务：{}子任务：{}'.format(task['name'], index+1), task_detail,
+                                     [{"name": "coordinator_ids", "desc": "协办人", "value": str(coordinator_ids)}])
                     for coordinator_id in coordinator_ids:
                         model.add_task_coordinator(task['id'], task_detail['id'], coordinator_id)
-                    model.conn.commit()
-                    model.set_autocommit(1)
-                    return json_response(message="添加成功")
+                send_sys_message(oversee_messages)
+                model.conn.commit()
+                return json_response(message="添加成功")
             except Exception as e:
                 print(e)
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                model.set_autocommit(1)
                 return json_response(code="FAIL", message="添加失败", data={})
         else:
             return json_response(code=1, errors=form.errors)
@@ -98,30 +111,29 @@ class ReleaseOverseeTaskView(Resource):
             task = dict(form.data)
             task_detail_list = task.pop("oversee_details")
             model = OverseeTaskModel()
-            model.set_autocommit(0)
             try:
-                task['file_names'] = str(task['file_names'])
+                model.start_transaction()
+                file_ids = task.pop('file_ids')
                 oversee_task = model.get_data_by_id(self.__table__, task['id'])
                 count = model.execute_update(self.__table__, task, oversee_task)
                 if count:
                     self.update_log(self.__table__, task['id'], '修改督办任务：{}'.format(task['name']),
                                     oversee_task, task)
+                model.reset_rel_task_file(task['id'], file_ids)
                 for index, update_data_detail in enumerate(task_detail_list):
                     task_detail = model.get_data_by_id('oversee_task_detail', update_data_detail['id'])
                     count = model.execute_update('oversee_task_detail', update_data_detail, task_detail,
-                                                 extra_conditions=['status = "待提交"'])
+                                                 extra_conditions=['status in ("待签收", "待提交")'])
                     if count:
                         model.update_log('oversee_task_detail', task_detail['id'], '修改督办任务：{}子任务：{}'.format(
                             task['name'], index + 1), task_detail, update_data_detail)
                     model.conn.commit()
-                    model.set_autocommit(1)
                     return json_response(message="修改成功")
             except Exception as e:
                 print(e)
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                model.set_autocommit(1)
                 return json_response(code="FAIL", message="修改失败", data={})
         else:
             return json_response(code=1, errors=form.errors)
@@ -135,10 +147,10 @@ class ReleaseOverseeTaskView(Resource):
         try:
             task = model.get_data_by_id(self.__table__, args['id'])
             if task:
-                model.set_autocommit(0)
+                model.start_transaction()
                 model.delete_task(args['id'])
                 model.delete_log(self.__table__, args['id'], "删除任务：{}".format(task['name']), task)
-                model.set_autocommit(1)
+                model.conn.commit()
             else:
                 pass
             return json_response(message="删除")
@@ -147,7 +159,6 @@ class ReleaseOverseeTaskView(Resource):
             import traceback
             traceback.print_exc()
             model.conn.rollback()
-            model.set_autocommit(1)
             return json_response(code="FAIL", message="修改失败", data={})
 
 
@@ -163,59 +174,66 @@ class SubmitOverseeTaskView(Resource):
         return True
 
     @admin_login_req
+    def post(self):
+        """
+        签收任务
+        :return:
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='签收子任务id', required=False, default=None)
+        args = parser.parse_args()
+        model = OverseeTaskModel()
+        task_detail = model.get_task_detail_and_task_name_by_id(args['id'])
+        if task_detail['status'] != '待签收':
+            return json_response(code=1, message="当前状态无法签收")
+        args['status'] = '待提交'
+        datetime.datetime.now()
+        model.execute_update(self.__table__, args)
+        model.update_log(self.__table__, args['id'], "签收任务：%s" % task_detail['name'], task_detail, args)
+        return json_response(code=0, message="签收成功")
+
+    @admin_login_req
     def put(self):
         form = SubmitOverseeTaskForm().from_json(request.values.to_dict())
         if form.validate():
             update_data = dict(form.data)
-            delete_file_ids = update_data.pop("delete_file_ids")
+            file_ids = update_data.pop("file_ids")
             model = OverseeTaskModel()
             task_detail = model.get_task_detail_and_task_name_by_id(update_data['id'])
             if task_detail['agent_id'] == request.user['id']:
                 return json_response(code=1, message="无权限操作该任务")
-            if task_detail['status'] == '已完成':
-                return json_response(code=1, message="任务已结束，不能修改")
+            if task_detail['status'] != '待提交':
+                return json_response(code=1, message="任务状态无法提交")
             situation = model.before_task_complete_situation(task_detail)
             if situation['unfinished_num'] > 0:
                 return json_response(code=1, message="前面任务尚未完成，暂时不能提交")
             try:
-                model.set_autocommit(0)
+                model.start_transaction()
                 update_data['status'] = '待审核'
                 update_data['submit_time'] = datetime.datetime.now()
                 model.execute_update(self.__table__, update_data, extra_conditions=['status!="已完成"'])
                 message = '经办人：{}提交任务:{}->子任务：{}'.format(request.user['real_name'], task_detail['name'],
                                                          situation['index'])
+                oversee_messages = [
+                    {"type": "督办任务", "status": "待审核", "send_time": datetime.datetime.now(),
+                     "task_id": task_detail['task_id'],
+                     "receive_id": task_detail['oversee_id'], "task_detail_id": task_detail['id'],
+                     "title": "督办任务：{}->第{}阶段任务待审核".format(task_detail['name'], situation['index'])}]
                 model.update_log(self.__table__, update_data['id'], message, task_detail, update_data)
                 # 删除文件
-                model.delete_file_by_ids(update_data['id'], delete_file_ids)
-                for f in request.files.getlist('file'):
-                    file_info = dict()
-                    # 检查文件类型
-                    now_time = datetime.datetime.now()
-                    file_info['file_name'] = f.filename
-                    file_info['size'] = len(f.read())
-                    file_info['task_detail_id'] = task_detail['id']
-                    file_info['task_id'] = task_detail['task_id']
-                    if f and self.allowed_file(f.filename):
-                        new_filename = str(now_time).replace(" ", '-') + '_' + f.filename
-                        base_bath = os.path.join(MEDIA_PATH, now_time.strftime('%Y%m'))
-                        if os.path.exists(base_bath) is False:
-                            os.mkdir(base_bath)
-                        file_path = os.path.join(base_bath, new_filename)
-                        f.save(file_path)
-                        file_info['add_time'] = now_time
-                        file_info['file_path'] = file_path.replace(MEDIA_PATH, '')
-                        file_info['id'] = model.execute_insert('oversee_task_detail_file', **file_info)
-                        model.insert_log(self.__table__, file_info['id'], "上传任务文件：{}".format(f.filename), file_info)
+                model.delete_file_by_ids(update_data['id'], file_ids)
+                file_list = upload_file('oversee', task_id=task_detail['task_id'], task_detail_id=task_detail['id'])
+                print(file_list)
+                model.execute_insert_many('oversee_task_detail_file', file_list)
+                send_sys_message(oversee_messages)
                 model.conn.commit()
-                model.set_autocommit(1)
-                return json_response(code=0, message="提交成功")
+                return json_response(code=0, message="经办成功")
             except Exception as e:
                 print(e)
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                model.set_autocommit(1)
-                return json_response(code="FAIL", message="修改失败", data={})
+                return json_response(code="FAIL", message="经办失败", data={})
         else:
             return json_response(code=1, errors=form.errors)
 
@@ -226,42 +244,66 @@ class AuditOverseeTaskView(Resource):
     __table_desc__ = '提交任务'
 
     @admin_login_req
+    def post(self):
+        """
+        签收任务
+        :return:
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='签收子任务id', required=False, default=None)
+        args = parser.parse_args()
+        model = OverseeTaskModel()
+        task = model.get_data_by_id('oversee_task', args['id'])
+        if task['status'] != '待签收':
+            return json_response(code=1, message="当前状态无法签收")
+        args['status'] = '待完成'
+        model.execute_update('oversee_task', args)
+        model.update_log('oversee_task', args['id'], "签收任务：%s" % task['name'], task, args)
+        return json_response(code=0, message="签收成功")
+
+    @admin_login_req
     def put(self):
         form = AuditOverseeTaskForm().from_json(request.json)
         if form.validate():
             update_data = dict(form.data)
             model = OverseeTaskModel()
             task_detail = model.get_task_detail_and_task_name_by_id(update_data['id'])
-            if task_detail['status'] not in ['待审核', '审批拒绝', '任务完成']:
+            if task_detail['status'] not in ['待审核', '审核驳回', '任务完成']:
                 return json_response(code=1, message="任务无法审批")
-            if task_detail['oversee_id'] == request.user['id']:
+            if task_detail['oversee_id'] != request.user['id']:
                 return json_response(code=1, message="无权限操作该任务")
             situation = model.before_task_complete_situation(task_detail)
             if situation['unfinished_num'] > 0:
                 return json_response(code=1, message="前面任务尚未完成，暂时不能提交")
             try:
-                model.set_autocommit(0)
+                model.start_transaction()
                 update_data['audit_time'] = datetime.datetime.now()
                 count = model.execute_update(self.__table__, update_data, task_detail,
                                              {"audit_time": datetime.datetime.now()},
-                                             extra_conditions=['status!="%s"' % '待提交'])
+                                             extra_conditions=['status!="%s"' % update_data['status']])
                 if count:
                     message = '督办人：{}提交任务:{}->子任务：{}'.format(request.user['real_name'], task_detail['name'],
                                                              situation['index'])
+                    oversee_messages = [
+                        {"type": "督办任务", "status": update_data['status'], "send_time": datetime.datetime.now(),
+                         "task_id": task_detail['task_id'], "task_detail_id": task_detail['id'],
+                         "receive_id": task_detail['agent_id'],
+                         "title": "督办任务：{}->第{}阶段任务{}".format(task_detail['name'], situation['index'],
+                                                              update_data['status'])}]
+                    print(model.get_data_by_id('oversee_task_detail', task_detail['id']))
                     model.update_task_progress(task_detail['task_id'])
+                    send_sys_message(oversee_messages)
                     model.update_log(self.__table__, update_data['id'], message, task_detail, update_data)
                     result = {"code": 0, "message": "审批成功"}
                 else:
                     result = {"code": 1, "message": "数据未发生变化"}
                 model.conn.commit()
-                model.set_autocommit(1)
                 return json_response(**result)
             except Exception as e:
                 print(e)
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                model.set_autocommit(1)
                 return json_response(code="FAIL", message="修改失败", data={})
         else:
             return json_response(code=1, errors=form.errors)
@@ -276,12 +318,12 @@ class OverseeMessageTaskView(Resource):
     @admin_login_req
     def get():
         parser = reqparse.RequestParser()
-        parser.add_argument("type", type=str, help='消息类型', choices=['send', 'receive'], required=False)
+        parser.add_argument("only_unread", type=int, help='仅未读', required=False, default=1)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
         parser.add_argument("page_size", type=int, help='页数', required=False, default=10)
         args = parser.parse_args()
         model = OverseeTaskModel()
-        result = model.get_oversee_message_list(request.user, args['type'], args['page'], args['page_size'])
+        result = model.get_oversee_message_list(request.user, args['only_unread'], args['page'], args['page_size'])
         return json_response(data=result)
 
     @admin_login_req
@@ -291,31 +333,14 @@ class OverseeMessageTaskView(Resource):
             update_data = dict(form.data)
             model = OverseeTaskModel()
             task_detail = model.get_task_detail_and_task_name_by_id(update_data['id'])
-            if task_detail['status'] not in ['待提交', '审批拒绝']:
+            if task_detail['status'] not in ['待签收', '待提交', '审批拒绝']:
                 return json_response(code=1, message="当前任务状态，无需督办")
-            if task_detail['oversee_id'] == request.user['id']:
+            if task_detail['oversee_id'] != request.user['id']:
                 return json_response(code=1, message="无权限操作该任务")
-            update_data['agent_id'] = task_detail['agent_id']
-            update_data['oversee_id'] = task_detail['oversee_id']
+            update_data['receive_id'] = task_detail['agent_id']
             update_data['send_time'] = datetime.datetime.now()
             update_data['title'] = "尽快完成任务：{}".format(task_detail['name'])
-            model.execute_insert(self.__table__, **update_data)
-            return json_response(code=0, message="督办消息已发送")
-
-    @admin_login_req
-    def post(self):
-        form = OverseeMessageForm().from_json(request.json)
-        if form.validate():
-            update_data = dict(form.data)
-            model = OverseeTaskModel()
-            task_detail = model.get_task_detail_and_task_name_by_id(update_data['task_detail_id'])
-            if task_detail['status'] not in ['待提交', '审批拒绝']:
-                return json_response(code=1, message="当前任务状态，无需督办")
-            update_data['agent_id'] = task_detail['agent_id']
-            update_data['oversee_id'] = task_detail['oversee_id']
-            update_data['send_time'] = datetime.datetime.now()
-            update_data['title'] = "尽快完成任务：{}".format(task_detail['name'])
-            model.execute_insert(self.__table__, **update_data)
+            send_sys_message([update_data])
             return json_response(code=0, message="督办消息已发送")
 
     @admin_login_req
@@ -324,7 +349,5 @@ class OverseeMessageTaskView(Resource):
         model = OverseeTaskModel()
         update_data = {"id": message_id, "receive_time": datetime.datetime.now()}
         count = model.execute_update(self.__table__, update_data,
-                                     extra_conditions=[f'agent_id={request.user["id"]}', 'receive_time is null'])
-        if count == 1:
-            return json_response(code=0, message="状态修改成功")
-        return json_response(code=1, message="状态修改失败")
+                                     extra_conditions=[f'receive_id={request.user["id"]}', 'receive_time is null'])
+        return json_response(code=0, message="消息已读")

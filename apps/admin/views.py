@@ -174,20 +174,18 @@ class AdminManageView(Resource):
         if form.validate():
             model = AdminModel()
             try:
-                model.set_autocommit(0)
+                model.start_transaction()
                 result = model.add_admin(form.data)
                 if result['code'] == 0:
                     admin = result['data']
                     model.insert_log(self.__table__, admin['id'], "新增用户：{}".format(admin['real_name']), admin)
                 model.conn.commit()
-                model.set_autocommit(1)
                 return json_response(**result)
             except Exception as e:
                 print(e)
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                model.set_autocommit(1)
                 return json_response(code="FAIL", message="修改失败", data={})
         else:
             return json_response(code="FAIL", message="表单验证异常", errors=form.errors)
@@ -201,7 +199,7 @@ class AdminManageView(Resource):
             if user:
                 data = dict(form.data)
                 try:
-                    model.set_autocommit(0)
+                    model.start_transaction()
                     result = model.update_admin(user, data)
                     if result['code'] == 1:
                         return {"code": 1, "message": "用户名已被使用，请重新输入"}
@@ -209,14 +207,12 @@ class AdminManageView(Resource):
                     model.update_log(self.__table__, user['id'], "修改用户：{}".format(user['real_name']),
                                      user, form.data)
                     model.conn.commit()
-                    model.set_autocommit(1)
                     return json_response(**result)
                 except Exception as e:
                     print(e)
                     import traceback
                     traceback.print_exc()
                     model.conn.rollback()
-                    model.set_autocommit(1)
                     return json_response(code="FAIL", message="修改失败", data={})
             else:
                 return json_response(code=1, message="用户不存在")
