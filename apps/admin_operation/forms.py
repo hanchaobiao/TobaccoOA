@@ -58,7 +58,7 @@ class AddScheduleEventForm(Form):
     """
     添加行程
     """
-    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空"), Length(max=20)])
+    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空")])
     title = StringField("行程标题", validators=[DataRequired(message="行程标题不能为空"), Length(max=30)])
     content = StringField("行程内容", validators=[DataRequired(message="行程内容不能为空"), Length(max=255)])
     start_date = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
@@ -70,7 +70,7 @@ class UpdateScheduleEventForm(Form):
     修改行程
     """
     id = IntegerField("备忘id", validators=[DataRequired(message="备忘id不能为空")])
-    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空"), Length(max=20)])
+    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空")])
     title = StringField("行程标题", validators=[DataRequired(message="行程标题不能为空"), Length(max=30)])
     content = StringField("行程内容", validators=[DataRequired(message="行程内容不能为空"), Length(max=255)])
     start_date = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])

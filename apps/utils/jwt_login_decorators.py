@@ -35,7 +35,7 @@ def admin_login_req(method):
                 # send_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'],
                 #                        leeway=JWT_EXPIRE, options={"verify_exp": True})
                 # admin = RedisPool().get_admin(send_data['id'])
-                admin = {'id': 2, 'username': 'hancb', 'real_name': '韩朝彪', 'phone': '17600093237', 'sex': '男', 'position': '经理', 'department_id': 1, 'is_disable': 0, 'is_delete': 0, 'role_id': 1}
+                admin = {'id': 2, 'username': 'hancb', 'real_name': '韩朝彪', 'phone': '17600093237', 'sex': '男', 'position': '经理', 'department_id': 1, 'is_disable': 0, 'is_delete': 0, 'role_id': 1, "role_level": 9}
                 if admin is None:
                     return json_response(code=401, message="请重新登陆")
                 if admin['is_disable']:

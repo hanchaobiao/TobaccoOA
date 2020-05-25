@@ -242,10 +242,10 @@ class MemoEventView(Resource):
     @admin_login_req
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("month", type=str, help='月份', required=True)
+        parser.add_argument("date", type=str, help='年月', required=True)
         args = parser.parse_args()
-        result = AdminOperateModel().get_my_memo(request.user['id'], args['month'])
-        return result
+        result = AdminOperateModel().get_my_memo(request.user['id'], args['date'])
+        return json_response(data=result)
 
     @admin_login_req
     def post(self):
@@ -256,6 +256,7 @@ class MemoEventView(Resource):
                 data['add_time'] = datetime.datetime.now()
                 data['admin_id'] = request.user['id']
                 AdminModel().execute_insert(self.__table__, **data)
+                return json_response(code=0, message="添加成功")
             except pymysql.err.IntegrityError:
                 return json_response(code=1, message="该日期已有备忘内容")
         else:
@@ -303,13 +304,13 @@ class ScheduleView(Resource):
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument("user_id", type=str, help='用户id', required=False)
-        parser.add_argument("month", type=str, help='月份', required=True)
+        parser.add_argument("date", type=str, help='年月', required=True)
         args = parser.parse_args()
         admin = request.user
-        if admin['role_id'] in [1, 2]:  # 副局长只能看自己的
+        if admin['role_id'] not in [1, 2]:  # 副局长只能看自己的
             args['user_id'] = request.user['id']
-        result = AdminOperateModel().get_schedule_event(request.user, args['user_id'])
-        return result
+        result = AdminOperateModel().get_schedule_event(request.user, args['user_id'], args['date'])
+        return json_response(data=result)
 
     @admin_login_req
     @allow_role_req([1, 2, 3])
@@ -319,7 +320,7 @@ class ScheduleView(Resource):
             try:
                 data = dict(form.data)
                 admin = request.user
-                if admin['role_id'] in [1, 2] and request.user['id'] != form.data['arranged_id']:
+                if admin['role_id'] not in [1, 2] and request.user['id'] != form.data['arranged_id']:
                     return json_response(code=1, message="无权给此人安排行程")
                 data['add_time'] = datetime.datetime.now()
                 data['operator_id'] = admin['id']
@@ -331,6 +332,7 @@ class ScheduleView(Resource):
                     send_sys_message([{"type": "行程", "status": "待签收", "send_time": now_time,
                                        "receive_id": data['arranged_id'],
                                        "title": "新安排行程：{}，请前去查看".format(data['title'])}])
+                return json_response(code=0, message="行程添加成功")
             except pymysql.err.IntegrityError:
                 return json_response(code=1, message="当天行程名已被使用")
         else:
@@ -344,7 +346,7 @@ class ScheduleView(Resource):
             try:
                 data = dict(form.data)
                 admin = request.user
-                if admin['role_id'] in [1, 2] and request.user['id'] != form.data['arranged_id']:
+                if admin['role_id'] not in [1, 2] and request.user['id'] != form.data['arranged_id']:
                     return json_response(code=1, message="无权修改此人安排行程")
                 model = AdminOperateModel()
                 schedule = model.get_data_by_id(self.__table__, data['id'])
@@ -355,6 +357,7 @@ class ScheduleView(Resource):
                     send_sys_message([{"type": "行程", "status": "待签收", "send_time": now_time,
                                        "receive_id": data['arranged_id'],
                                        "title": "修改行程：{}，请前去查看".format(data['title'])}])
+                return json_response(message="行程修改成功")
             except pymysql.err.IntegrityError:
                 return json_response(code=1, message="当天行程名已被使用")
         else:

@@ -30,7 +30,8 @@ class AdminModel(BaseDb):
         :param username:
         :return:
         """
-        sql = "SELECT * FROM sys_admin WHERE username=%s"
+        sql = "SELECT *, `level` as role_level, role_name FROM sys_admin " \
+              "JOIN sys_admin_role ON sys_admin.id=sys_admin_role.role_id WHERE username=%s"
         self.dict_cur.execute(sql, username)
         admin = self.dict_cur.fetchone()
         return admin
