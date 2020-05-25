@@ -8,7 +8,7 @@ import re
 import datetime
 
 from wtforms import Form
-from wtforms import StringField, IntegerField, MultipleFileField
+from wtforms import StringField, IntegerField, DecimalField
 from wtforms.validators import DataRequired, Regexp, Length, AnyOf, Email, ValidationError, NumberRange
 
 
@@ -52,3 +52,35 @@ class UpdateMemoEventForm(Form):
     start_date = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
     end_date = StringField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
     is_complete = IntegerField("备忘id", validators=[AnyOf([0, 1])])
+
+
+class AddScheduleEventForm(Form):
+    """
+    添加行程
+    """
+    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空"), Length(max=20)])
+    title = StringField("行程标题", validators=[DataRequired(message="行程标题不能为空"), Length(max=30)])
+    content = StringField("行程内容", validators=[DataRequired(message="行程内容不能为空"), Length(max=255)])
+    start_date = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
+    end_date = StringField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
+
+
+class UpdateScheduleEventForm(Form):
+    """
+    修改行程
+    """
+    id = IntegerField("备忘id", validators=[DataRequired(message="备忘id不能为空")])
+    arranged_id = IntegerField("被安排人", validators=[DataRequired(message="被安排人不能为空"), Length(max=20)])
+    title = StringField("行程标题", validators=[DataRequired(message="行程标题不能为空"), Length(max=30)])
+    content = StringField("行程内容", validators=[DataRequired(message="行程内容不能为空"), Length(max=255)])
+    start_date = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
+    end_date = StringField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
+
+
+class TaxProgressForm(Form):
+    """
+    税率
+    """
+    complete_tax_money = DecimalField("完成税额",  places=10, rounding=2)
+    total_tax_money = DecimalField("模板税额", places=10, rounding=2)
+    year = StringField("年份", validators=[DataRequired(message="年份不能为空"), Length(min=4, max=4)])

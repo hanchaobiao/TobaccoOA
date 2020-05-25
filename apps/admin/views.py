@@ -13,6 +13,7 @@ from module.AdminDb import AdminModel
 from module.DepartmentDb import DepartmentModel
 from common.response import json_response
 from apps.utils.jwt_login_decorators import admin_login_req
+from apps.utils.permissions_auth import allow_role_req
 from resources.redis_pool import RedisPool
 
 
@@ -152,6 +153,7 @@ class AdminManageView(Resource):
 
     @staticmethod
     @admin_login_req
+    @allow_role_req()
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=str, help='部门id', required=False)
@@ -169,6 +171,7 @@ class AdminManageView(Resource):
         return json_response(data=result)
 
     @admin_login_req
+    @allow_role_req()
     def post(self):
         form = AddAdminForm().from_json(request.json)
         if form.validate():
@@ -177,7 +180,7 @@ class AdminManageView(Resource):
                 model.start_transaction()
                 result = model.add_admin(form.data)
                 if result['code'] == 0:
-                    admin = result['data']
+                    admin = request.user
                     model.insert_log(self.__table__, admin['id'], "新增用户：{}".format(admin['real_name']), admin)
                 model.conn.commit()
                 return json_response(**result)
@@ -191,6 +194,7 @@ class AdminManageView(Resource):
             return json_response(code="FAIL", message="表单验证异常", errors=form.errors)
 
     @admin_login_req
+    @allow_role_req()
     def put(self):
         form = UpdateAdminForm().from_json(request.json)
         if form.validate():
@@ -220,6 +224,7 @@ class AdminManageView(Resource):
             return json_response(code="FAIL", message="表单验证异常", errors=form.errors)
 
     @admin_login_req
+    @allow_role_req()
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='部门id', required=True)
@@ -237,3 +242,55 @@ class AdminManageView(Resource):
             return json_response(data=user)
         else:
             return json_response(code=1, message="用户不存在")
+
+
+class ResetPasswordView(Resource):
+    """
+    重置密码
+    """
+
+    __table__ = 'sys_admin'
+
+    @admin_login_req
+    @allow_role_req()
+    def put(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=str, help='部门id', required=False)
+        args = parser.parse_args()
+        model = AdminModel()
+        user = model.get_data_by_id(self.__table__, args['id'])
+        args['password'] = model.get_md5_password('666666')
+        model.execute_update(self.__table__, args)
+        model.update_log(self.__table__, args['id'], "重置账户：{}密码".format(user['username']), user, args)
+        return json_response(data={})
+
+
+class AdminMessageView(Resource):
+    """
+    个人消息
+    """
+
+    __table__ = 'sys_message'
+
+    @staticmethod
+    @admin_login_req
+    def get():
+        parser = reqparse.RequestParser()
+        parser.add_argument("type", type=str, help='消息类型', required=False)
+        parser.add_argument("page", type=int, help='页码', required=False, default=1)
+        parser.add_argument("page_size", type=int, help='页数', required=False, default=10)
+        args = parser.parse_args()
+        am = AdminModel()
+        admin = request.user
+        result = am.get_my_message_list(admin, args['type'], args['page'], args['page_size'])
+        return json_response(data=result)
+
+    @admin_login_req
+    def put(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='消息id', required=False)
+        args = parser.parse_args()
+        am = AdminModel()
+        args['receive_time'] = datetime.datetime.now()
+        am.execute_update(self.__table__, args['id'], args, extra_conditions=['receive_time IS NULL'])
+        return json_response(data={})

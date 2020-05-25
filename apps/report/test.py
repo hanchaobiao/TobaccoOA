@@ -22,35 +22,34 @@ def task_release():
     :return:
     """
 
-    data = {}
-    response = requests.get(f"{web_url}/task/release", headers=headers, params=data)
-    print(response.text)
-
-    # data = {"id": 21}
+    # data = {"relation": '由我协办'}
     # response = requests.get(f"{web_url}/task/release", headers=headers, params=data)
     # print(response.text)
 
-    # data = {
-    #     "type": "重大事务",
-    #     "name": "提升销量",
-    #     "task_no": "A1000",
-    #     "file_ids": [1,3],
-    #     "introduce": "测试一下",
-    #     "oversee_id": 2,
-    #     "start_time": "2020-05-10 00:00:00",
-    #     "end_time": "2020-05-20 00:00:00",
-    #     "oversee_details": [
-    #         {
-    #             "name": "开动员会",
-    #             "introduce": "动员全体员工",
-    #             "agent_id": 3,
-    #             "department_id":  2,
-    #             "start_time": "2020-05-08 00:00:00",
-    #             "end_time": "2020-05-10 00:00:00",
-    #             "coordinator_ids": [1]
-    #         }
-    #     ]
-    # }
+    data = {"id": 10}
+    response = requests.get(f"{web_url}/task/release", headers=headers, params=data)
+    print(response.text)
+
+    data = {
+        "type": "重大事务",
+        "name": "提升销量",
+        "file_names": ["中央一号文件"],
+        "introduce": "测试一下",
+        "oversee_id": 2,
+        "start_time": "2020-05-08 00:00:00",
+        "end_time": "2020-05-10 00:00:00",
+        "oversee_details": [
+            {
+                "name": "开动员会",
+                "introduce": "动员全体员工",
+                "agent_id": 3,
+                "department_id":  2,
+                "start_time": "2020-05-08 00:00:00",
+                "end_time": "2020-05-10 00:00:00",
+                "coordinator_ids": [1]
+            }
+        ]
+    }
     # response = requests.post(f"{web_url}/task/release", headers=headers, json=data)
     # print(response.text)
 
@@ -150,7 +149,7 @@ def oversee_message():
 if __name__ == "__main__":
     # department_test()
     # upload_file()
-    task_release()
+    # task_release()
     # audit_task()
     # submit_task()
-    # oversee_message()
+    oversee_message()

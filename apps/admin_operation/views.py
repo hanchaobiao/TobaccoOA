@@ -13,13 +13,15 @@ import pymysql
 from flask import request, make_response
 from flask_restful import Resource, reqparse
 from apps import MEDIA_PATH
-from apps.admin_operation.forms import AddDepartmentForm, UpdateDepartmentForm, AddMemoEventForm, UpdateMemoEventForm
+from apps.admin_operation.forms import AddDepartmentForm, UpdateDepartmentForm, AddMemoEventForm, UpdateMemoEventForm,\
+    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm
 from module.AdminDb import AdminModel
 from module.AdminOperateDb import AdminOperateModel
 from module.DepartmentDb import DepartmentModel
 from module.FileManageDb import FileManageModel
 from common.response import json_response
 from apps.utils.jwt_login_decorators import admin_login_req
+from apps.utils.permissions_auth import allow_role_req
 from apps.admin_operation.task import upload_file
 from apps.oversee.task import send_sys_message
 
@@ -166,17 +168,18 @@ class FileManageView(Resource):
         try:
             model.start_transaction()
             file_list = upload_file('system')
-            ids = model.execute_insert_many(self.__table__, file_list)
             for index, file_info in enumerate(file_list):
-                file_info['id'] = ids[index]
-                model.execute_insert(self.__table__, **file_info)
-                model.insert_log(self.__table__, file_info['id'], file_info)
+                file_id = model.execute_insert(self.__table__, **file_info)
+                file_info['id'] = file_id
+                model.insert_log(self.__table__, file_info['id'], "上传文件：{}".format(file_info['file_name']),
+                                 file_info)
             model.conn.commit()
             return json_response(code=0, message="上传成功", data=file_list)
         except pymysql.err.IntegrityError:
             message = "文件名:{}已存在".format(file_info['file_name'])
         except Exception as e:
-            print(e)
+            import traceback
+            traceback.print_exc()
             message = str(e)
             model.conn.rollback()
         return json_response(code=1, message=message)
@@ -296,48 +299,69 @@ class ScheduleView(Resource):
     __table__ = 'schedule_event'
 
     @admin_login_req
+    @allow_role_req([1, 2, 3])
     def get(self):
         parser = reqparse.RequestParser()
+        parser.add_argument("user_id", type=str, help='用户id', required=False)
         parser.add_argument("month", type=str, help='月份', required=True)
         args = parser.parse_args()
-        result = AdminOperateModel().get_my_memo(request.user['id'], args['month'])
+        admin = request.user
+        if admin['role_id'] in [1, 2]:  # 副局长只能看自己的
+            args['user_id'] = request.user['id']
+        result = AdminOperateModel().get_schedule_event(request.user, args['user_id'])
         return result
 
     @admin_login_req
+    @allow_role_req([1, 2, 3])
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("arranged_id", type=str, help='行程内容', required=True)
-        parser.add_argument("content", type=str, help='行程内容', required=True)
-        parser.add_argument("schedule_time", type=str, help='行程时间', required=True)
-        args = parser.parse_args()
-        try:
-            if 1 not in request.user['role_ids'] and args['arranged_id'] != request.user['id']:
-                return json_response(code=1, message="无权给此人安排行程")
-            args['add_time'] = datetime.datetime.now()
-            args['operator_id'] = request.user['id']
-            AdminOperateModel().execute_insert(self.__table__, **args)
-        except pymysql.err.IntegrityError:
-            return json_response(code=1, message="该日期已有备忘内容")
+        form = AddScheduleEventForm().from_json(request.json)
+        if form.validate():
+            try:
+                data = dict(form.data)
+                admin = request.user
+                if admin['role_id'] in [1, 2] and request.user['id'] != form.data['arranged_id']:
+                    return json_response(code=1, message="无权给此人安排行程")
+                data['add_time'] = datetime.datetime.now()
+                data['operator_id'] = admin['id']
+                model = AdminOperateModel()
+                data['id'] = model.execute_insert(self.__table__, **data)
+                model.insert_log(self.__table__, data['id'], "新增行程", data)
+                now_time = datetime.datetime.now()
+                if admin['id'] != form.data['arranged_id']:
+                    send_sys_message([{"type": "行程", "status": "待签收", "send_time": now_time,
+                                       "receive_id": data['arranged_id'],
+                                       "title": "新安排行程：{}，请前去查看".format(data['title'])}])
+            except pymysql.err.IntegrityError:
+                return json_response(code=1, message="当天行程名已被使用")
+        else:
+            return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1, 2, 3])
     def put(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("id", type=int, help='id', required=True)
-        parser.add_argument("content", type=str, help='备忘内容', required=True)
-        parser.add_argument("schedule_time", type=str, help='行程时间', required=True)
-        args = parser.parse_args()
-        model = AdminOperateModel()
-        schedule = model.get_data_by_id(self.__table__, args['id'])
-        if schedule is None:
-            return json_response(code=1, message="无此备忘记录")
-        if schedule['operator_id'] != request.user['id'] or 1 not in request.user['role_ids']:
-            return json_response(code=1, message="无权限操作此备忘录")
-        if 1 not in request.user['role_ids']:
-            return json_response(code=1, message="无权给此人安排行程")
-        model.execute_update(self.__table__, args, schedule)
-        return json_response(code=0, message="修改成功")
+        form = UpdateScheduleEventForm().from_json(request.json)
+        if form.validate():
+            try:
+                data = dict(form.data)
+                admin = request.user
+                if admin['role_id'] in [1, 2] and request.user['id'] != form.data['arranged_id']:
+                    return json_response(code=1, message="无权修改此人安排行程")
+                model = AdminOperateModel()
+                schedule = model.get_data_by_id(self.__table__, data['id'])
+                model.execute_update(self.__table__, data, schedule)
+                model.update_log(self.__table__, data['id'], "修改行程:{}".format(data['title']), schedule, data)
+                now_time = datetime.datetime.now()
+                if admin['id'] != form.data['arranged_id']:
+                    send_sys_message([{"type": "行程", "status": "待签收", "send_time": now_time,
+                                       "receive_id": data['arranged_id'],
+                                       "title": "修改行程：{}，请前去查看".format(data['title'])}])
+            except pymysql.err.IntegrityError:
+                return json_response(code=1, message="当天行程名已被使用")
+        else:
+            return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1, 2, 3])
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='id', required=True)
@@ -346,31 +370,40 @@ class ScheduleView(Resource):
         schedule = model.get_data_by_id(self.__table__, args['id'])
         if schedule is None:
             return json_response(code=1, message="无此日程记录")
-        if schedule['admin_id'] != request.user['id']:
-            return json_response(code=1, message="无权限操作此日程")
-        model.execute_delete(self.__table__, [f'id={args["id"]}', 'admin_id={}'.format(request.user['id'])])
+        admin = request.user
+        if admin['role_id'] in [1, 2] and request.user['id'] != schedule['arranged_id']:
+            return json_response(code=1, message="无权删除此人安排行程")
+        model.execute_delete(self.__table__, [f'id={args["id"]}', 'arranged_id={}'.format(admin['id'])])
+        model.delete_log(self.__table__, schedule['id'], desc="删除行程：{}".format(schedule['title']))
+        if admin['id'] != schedule['arranged_id']:
+            send_sys_message([{"type": "行程", "status": "待签收", "send_time": datetime.datetime.now(),
+                               "receive_id": schedule['arranged_id'],
+                               "title": "行程：{}被删除，请前去查看".format(schedule['title'])}])
         return json_response(code=0, message="删除成功")
 
 
-class AdjustScheduleView(Resource):
+class TaxProgressView(Resource):
     """
-    调整行程安排
+    税率进度
     """
 
-    __table__ = 'schedule_event'
+    __table__ = 'tax_progress'
 
     @admin_login_req
-    def put(self):
+    @allow_role_req([1, 2, 3])
+    def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("id", type=int, help='id', required=True)
-        parser.add_argument("schedule_time", type=str, help='行程时间', required=True)
+        parser.add_argument("year", type=int, help='年份必填', required=True)
         args = parser.parse_args()
-        model = AdminOperateModel()
-        schedule = model.get_data_by_id(self.__table__, args['id'])
-        if schedule is None:
-            return json_response(code=1, message="无此备忘记录")
-        if schedule['admin_id'] != request.user['id']:
-            return json_response(code=1, message="无权限操作此备忘录")
-        model.execute_update(self.__table__, args, schedule)
-        return json_response(code=0, message="修改成功")
+        tax = AdminOperateModel().get_tax_progress(args['year'])
+        return json_response(data=tax)
 
+    @admin_login_req
+    @allow_role_req([1, 2, 3])
+    def put(self):
+        form = TaxProgressForm()
+        if form.validate():
+            tax = AdminOperateModel().replace_tax_progress(form.data)
+            return json_response(data=tax)
+        else:
+            return json_response(code=1, errors=form.errors)

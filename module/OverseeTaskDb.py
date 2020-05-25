@@ -40,6 +40,15 @@ class OverseeTaskModel(BaseDb):
         sql = "SELECT progress FROM oversee_task WHERE id=%s"
         self.dict_cur.execute(sql, task_id)
         task = self.dict_cur.fetchone()
+
+        sql = "SELECT sys_file_manage.* FROM rel_task_file " \
+              "JOIN sys_file_manage ON rel_task_file.file_id=sys_file_manage.id WHERE task_id=%s"
+        self.dict_cur.execute(sql, task_id)
+        file_list = self.dict_cur.fetchall()
+        task['files'] = []
+        for item in file_list:
+            item['url'] = parse.urljoin(MEDIA_PREFIX, item['file_path'])
+            task['files'].append(item)
         sql = "SELECT detail.*, sys_admin.real_name as agent_name, dict_department.name asdepartment_name " \
               "FROM oversee_task_detail detail JOIN sys_admin " \
               "ON detail.agent_id=sys_admin.id JOIN dict_department ON detail.department_id=dict_department.id " \
@@ -145,10 +154,10 @@ class OverseeTaskModel(BaseDb):
             res['oversee_name'] = people_dict.get(res['oversee_id'])
             res['release_name'] = people_dict.get(res['release_id'])
             if res['agent_ids']:
-                for agent_id in res['agent_ids'].split(","):
+                for agent_id in list(set(res['agent_ids'].split(","))):
                     res['agents'].append({"id": agent_id, "name": people_dict.get(int(agent_id))})
             if res['coordinator_ids']:
-                for coordinator_id in res['coordinator_ids'].split(","):
+                for coordinator_id in list(set(res['coordinator_ids'].split(","))):
                     res['coordinators'].append({"id": coordinator_id, "name": people_dict.get(int(coordinator_id))})
         return data_list
 

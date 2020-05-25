@@ -18,6 +18,7 @@ from module.WishDb import WishModel
 from common.response import json_response
 from apps.utils.db_transaction import db_transaction
 from apps.utils.jwt_login_decorators import admin_login_req
+from apps.utils.permissions_auth import allow_role_req
 from resources.redis_pool import RedisPool
 from apps.admin_operation.task import upload_file
 from apps.oversee.task import send_sys_message
@@ -76,7 +77,7 @@ class EmployeeWishView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='心愿id', required=False, default=None)
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
-        parser.add_argument("status", type=str, help='执行状态', choices=['', '待审核', '驳回', '待签收', '待提交', '已完成'],
+        parser.add_argument("status", type=str, help='执行状态', choices=['', '待审核', '驳回', '待签收', '待提交', '心愿完成'],
                             required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
         parser.add_argument("page_size", type=int, help='页数', required=False, default=20)
@@ -90,6 +91,7 @@ class EmployeeWishView(Resource):
         return json_response(data=result)
 
     @admin_login_req
+    @allow_role_req([1])
     def post(self):
         form = AddWishForm().from_json(request.values.to_dict())
         if form.validate():
@@ -107,6 +109,7 @@ class EmployeeWishView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1])
     def put(self):
         form = UpdateWishForm().from_json(request.values.to_dict())
         if form.validate():
@@ -205,7 +208,7 @@ class SubmitWishView(Resource):
                 data['id'] = model.execute_update(self.__table__, data, wish)
                 file_list = upload_file('wish', wish_id=data['id'], file_type=2)
                 model.execute_insert_many('employee_wish_file', file_list)
-                model.update_log(self.__table__, data['id'], '经办心愿：{}上传完成信息'.format(wish['name']))
+                model.update_log(self.__table__, data['id'], '经办心愿：{}上传完成信息'.format(wish['name']), wish, data)
                 model.conn.commit()
                 return json_response(data=data, message="心愿办理资料提交成功")
             except Exception as e:

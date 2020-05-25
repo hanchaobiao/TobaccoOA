@@ -77,14 +77,15 @@ class ReleaseOverseeTaskView(Resource):
                 file_list = [{"file_id": file_id, "task_id": task['id']} for file_id in file_ids]
                 model.execute_insert_many('rel_task_file', file_list)
                 now_time = datetime.datetime.now()
-                oversee_messages.append({"type": "待签收", "send_time": now_time, "task_id": task['id'],
+                oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
                                          "receive_id": task['oversee_id'], "task_detail_id": None,
                                          "title": "督办任务：{}待签收".format(task['name'])})
                 model.insert_log(self.__table__, task['id'], '发布督办任务：{}'.format(task['name']), task)
                 for index, task_detail in enumerate(task_detail_list):
                     coordinator_ids = task_detail.pop("coordinator_ids")
                     task_detail = model.add_oversee_task_detail(task['id'], task_detail)
-                    oversee_messages.append({"type": "待签收", "send_time": now_time, "task_id": task['id'],
+                    oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
+                                             "task_id": task['id'],
                                              "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
                                              "title": "督办任务：{}->第{}阶段任务待签收".format(task['name'], index+1)})
                     model.insert_log('oversee_task_detail', task_detail['id'],

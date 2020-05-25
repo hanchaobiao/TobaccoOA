@@ -31,14 +31,44 @@ class AdminOperateModel(BaseDb):
         :param month:
         :return:
         """
-        sql = "SELECT * FROM memo_event WHERE admin_id=%s and DATE_FORMAT('%Y-%m')=%s"
+        sql = "SELECT * FROM memo_event WHERE admin_id=%s and DATE_FORMAT(start_date, '%%Y-%%m')=%s"
         self.dict_cur.execute(sql, admin_id, month)
         rows = self.dict_cur.fetchall()
         return rows
 
+    def get_schedule_event(self, user_id, month):
+        """
+        获取部门行程
+        :param user_id:
+        :param month:
+        :return:
+        """
+        sql = "SELECT * FROM schedule_event WHERE DATE_FORMAT(start_date, '%%Y-%%m')=%s"
+        if user_id:  # 办公室
+            sql += " AND operator_id={}".format(user_id)
+        self.dict_cur.execute(sql, month)
+        rows = self.dict_cur.fetchall()
+        user_ids = []
+        operator_ids = []
+        for row in rows:
+            user_ids.append(row['arranged_id'])
+            user_ids.append(row['operator_id'])
+            operator_ids.append(row['operator_id'])
+        if len(rows) == 0:
+            return {"query_user": [], "list": []}
+        sql = "SELECT * FROM sys_admin WHERE id in %s" % (str(tuple(set(user_ids))).replace(",)", ")"))
+        self.dict_cur.execute(sql)
+        user_list = self.dict_cur.fetchall()
+        user_dict = {user['id']: user['real_name'] for user in user_list}
+        for row in rows:
+            row['arranged_name'] = user_dict[row['arranged_id']]
+            row['operator_name'] = user_dict[row['operator_id']]
+        query_list = []
+        for operator_id in set(operator_ids):
+            query_list.append({"id": operator_id, "name": user_dict[operator_id]})
+        return {"query_user": query_list, "list": rows}
+
 
 if __name__ == "__main__":
-    am = AdminModel()
-    print(am.get_admin_list("张三", "市局机关", 1, 10))
-    am.add_admin({"username": "admin1", "password": "123456", "nickname": "测试1", "phone": "17600093237",
-                  "role_name": "超级管理员"})
+    am = AdminOperateModel()
+    am.get_schedule_event(None, '2020-05')
