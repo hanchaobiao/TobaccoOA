@@ -19,6 +19,7 @@ from module.AdminDb import AdminModel
 from common.response import json_response
 from apps.utils.db_transaction import db_transaction
 from apps.utils.jwt_login_decorators import admin_login_req
+from apps.utils.permissions_auth import allow_role_req
 from resources.redis_pool import RedisPool
 from apps.oversee.task import send_sys_message
 from apps.admin_operation.task import upload_file
@@ -34,6 +35,7 @@ class ReleaseOverseeTaskView(Resource):
 
     @staticmethod
     @admin_login_req
+    @allow_role_req([1, 2, 3, 4])
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help='任务名称', required=False, default=None)
@@ -60,6 +62,7 @@ class ReleaseOverseeTaskView(Resource):
         return json_response(data=result)
 
     @admin_login_req
+    @allow_role_req([1])
     def post(self):
         form = AddOverseeTaskForm().from_json(request.json)
         if form.validate():
@@ -82,6 +85,8 @@ class ReleaseOverseeTaskView(Resource):
                                          "title": "督办任务：{}待签收".format(task['name'])})
                 model.insert_log(self.__table__, task['id'], '发布督办任务：{}'.format(task['name']), task)
                 for index, task_detail in enumerate(task_detail_list):
+                    if index > 0 and task_detail['start_time'] < task_detail_list[index-1]['end_time']:
+                        return json_response(code=1, message="下一任务的开始时间要大于等于前一任务的结束时间")
                     coordinator_ids = task_detail.pop("coordinator_ids")
                     task_detail = model.add_oversee_task_detail(task['id'], task_detail)
                     oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
@@ -106,6 +111,7 @@ class ReleaseOverseeTaskView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1])
     def put(self):
         form = UpdateOverseeTaskForm().from_json(request.json)
         if form.validate():
@@ -140,6 +146,7 @@ class ReleaseOverseeTaskView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1])
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='任务id', required=True)
@@ -175,6 +182,7 @@ class SubmitOverseeTaskView(Resource):
         return True
 
     @admin_login_req
+    @allow_role_req([4])
     def post(self):
         """
         签收任务
@@ -194,6 +202,7 @@ class SubmitOverseeTaskView(Resource):
         return json_response(code=0, message="签收成功")
 
     @admin_login_req
+    @allow_role_req([4])
     def put(self):
         form = SubmitOverseeTaskForm().from_json(request.values.to_dict())
         if form.validate():
@@ -201,7 +210,7 @@ class SubmitOverseeTaskView(Resource):
             file_ids = update_data.pop("file_ids")
             model = OverseeTaskModel()
             task_detail = model.get_task_detail_and_task_name_by_id(update_data['id'])
-            if task_detail['agent_id'] == request.user['id']:
+            if task_detail['agent_id'] != request.user['id']:
                 return json_response(code=1, message="无权限操作该任务")
             if task_detail['status'] != '待提交':
                 return json_response(code=1, message="任务状态无法提交")
@@ -245,6 +254,7 @@ class AuditOverseeTaskView(Resource):
     __table_desc__ = '提交任务'
 
     @admin_login_req
+    @allow_role_req([2, 3])
     def post(self):
         """
         签收任务
@@ -263,6 +273,7 @@ class AuditOverseeTaskView(Resource):
         return json_response(code=0, message="签收成功")
 
     @admin_login_req
+    @allow_role_req([2, 3])
     def put(self):
         form = AuditOverseeTaskForm().from_json(request.json)
         if form.validate():

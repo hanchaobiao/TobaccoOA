@@ -103,12 +103,12 @@ class DepartmentModel(BaseDb):
         :param department_id:
         :return:
         """
-        sql = "SELECT id FROM dict_department WHERE is_delete=0 AND (id={pid} or path like '{pid},%' " \
+        sql = "SELECT id, name FROM dict_department WHERE is_delete=0 AND (id={pid} or path like '{pid},%' " \
               "or path like '%,{pid},%' or path like '%,{pid}')".format(pid=department_id)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
-        child_ids = [row['id'] for row in rows]
-        return child_ids
+        child_dict = {row['id']: row for row in rows}
+        return child_dict
 
     def get_department_by_name(self, name):
         """

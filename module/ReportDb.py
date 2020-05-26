@@ -23,23 +23,31 @@ class ReportModel(BaseDb):
         :param department_id:
         :return:
         """
-        result = {'work_state': [], 'job_type': []}
+
+        result = {'work_state': [{"status": "退岗", "num": 0}, {"status": "内退", "num": 0},
+                                 {"status": "退休", "num": 0}, {"status": "改非", "num": 0}],
+                  'job_type': [{"status": '在岗正式工', "num": 0},
+                               {"status": '在岗人事代理', "num": 0},
+                               {"status": '在岗劳务派遣', "num": 0}]}
+        sql = "SELECT status, COUNT(id) as num FROM sys_admin WHERE is_delete=0 {} GROUP BY status"
         if department_id:
-            sql = "SELECT status, COUNT(sys_admin.id) as num FROM sys_admin " \
-                  "JOIN dict_department ON sys_admin.department_id=dict_department.id " \
-                  "WHERE (department_id={pid} or path like '{pid},%' or path like '%,{pid},%' or path like '%,{pid}') " \
-                  "AND sys_admin.is_delete=0 GROUP BY status".format(pid=department_id)
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
         else:
-            sql = "SELECT status, COUNT(id) as num FROM sys_admin WHERE is_delete=0 %s GROUP BY status"
+            sql = sql.format('')
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         sum_num = 0
         for row in rows:
+            for item in result['work_state']:
+                if row['status'] == item['status']:
+                    item['num'] = row['num']
+            for item in result['job_type']:
+                if row['status'] == item['status']:
+                    item['num'] = row['num']
             if '在岗' in row['status']:
-                result['job_type'].append(row)
                 sum_num += row['num']
-            else:
-                result['work_state'].append(row)
         result['work_state'].append({"status": "在岗", "num": sum_num})
         return result
 
@@ -49,24 +57,35 @@ class ReportModel(BaseDb):
         :param department_id:
         :return:
         """
+        sql = " SELECT position as name, COUNT(id) as value FROM sys_admin " \
+              " WHERE position NOT IN ('局长', '局领导') {} GROUP BY position"
         if department_id:
-            sql = """
-            SELECT position as name, COUNT(sys_admin.id) as value FROM sys_admin JOIN dict_department ON sys_admin.department_id=dict_department.id
-            WHERE position NOT IN ('局长', '局领导') AND sys_admin.is_delete=0
-            AND (department_id={pid} or path like '{pid},%' or path like '%,{pid},%' or path like '%,{pid}')
-            GROUP BY position
-            """.format(pid=department_id)
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
         else:
-            sql = " SELECT position as name, COUNT(id) as value FROM sys_admin WHERE position NOT IN ('局长', '局领导') GROUP BY position"
+            sql = sql.format('')
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
+        all_section_name = ['科长', '经理', '主任', '主任科员', '副科长', '副经理', '副主任科员', '副主任']
         section_chief = []
+        section_chief_names = set()
+        all_gj_name = ['正股', '副股', '普通员工']
         gj = []
+        gj_names = []
         for row in rows:
-            if row['name'] in ['科长', '经理', '主任', '主任科员', '副科长', '副经理', '副主任科员', '副主任']:
+            if row['name'] in all_section_name:
                 section_chief.append(row)
-            elif row['name'] in ['正股', '副股', '普通员工']:
+                section_chief_names.add(row['name'])
+            elif row['name'] in all_gj_name:
                 gj.append(row)
+                gj_names.append(row['name'])
+        for name in all_section_name:
+            if name not in section_chief_names:
+                section_chief.append({"name": name, "value": 0})
+        for name in all_gj_name:
+            if name not in gj_names:
+                gj.append({"name": name, "value": 0})
         return {"section_chief": section_chief, "gj": gj}
 
     def oversee_task_statistics(self, department_id):
@@ -77,15 +96,15 @@ class ReportModel(BaseDb):
         """
         sql = """
             SELECT status as name, COUNT(*) as value FROM (
-                SELECT task_id, CASE WHEN group_concat(status) = '任务完成' then '已完成' 
-                    WHEN group_concat(status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+                SELECT task_id, CASE WHEN group_concat(DISTINCT status) = '任务完成' then '已完成' 
+                    WHEN group_concat(DISTINCT status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
                     ELSE '进行中' END  as status 
                 FROM oversee_task_detail %s GROUP BY task_id
             ) AS tmp GROUP BY status"""
         if department_id:
-            child_ids = DepartmentModel().get_child_department_by_ids(department_id)
-            if child_ids:
-                sql = sql % " WHERE department_id IN {}".format(str(tuple(child_ids)).replace(",)", ")"))
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql % " WHERE department_id IN {}".format(str(tuple(child_dict.keys())).replace(",)", ")"))
         else:
             sql = sql % ''
         self.dict_cur.execute(sql)
@@ -105,8 +124,8 @@ class ReportModel(BaseDb):
         sql = """
             SELECT DATE_FORMAT(add_time, '%Y-%m') as month, tmp.status as name, COUNT(*) as value 
             FROM oversee_task JOIN (
-                SELECT task_id, CASE WHEN group_concat(status) = '任务完成' then '已完成' 
-                    WHEN group_concat(status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+                SELECT task_id, CASE WHEN group_concat(DISTINCT status) = '任务完成' then '已完成' 
+                    WHEN group_concat(DISTINCT status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
                     ELSE '进行中' END  as status 
                 FROM oversee_task_detail {} GROUP BY task_id
             ) AS tmp ON oversee_task.id=tmp.task_id 
@@ -114,9 +133,9 @@ class ReportModel(BaseDb):
             GROUP BY month, tmp.status"""
 
         if department_id:
-            child_ids = DepartmentModel().get_child_department_by_ids(department_id)
-            if child_ids:
-                sql = sql.format(" WHERE department_id IN {}".format(str(tuple(child_ids)).replace(",)", ")")))
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" WHERE department_id IN {}".format(str(tuple(child_dict.keys())).replace(",)", ")")))
         else:
             sql = sql.format('')
         self.dict_cur.execute(sql)
@@ -136,25 +155,66 @@ class ReportModel(BaseDb):
             data_list.append({"name": name, "data": data})
         return {"x_axis": axis, "y_axis": data_list}
 
-    def department_oversee_task_complete_num_sort(self, department_id):
-        """
-        部门完成数排名
-        :return:
-        """
-        sql = """
-        SELECT * FROM oversee_task JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id JOIN 
-        WHERE progress=100 JOIN dict_department ON oversee_task_detail.department_id=dict_department.id 
-        """
-
     def get_newest_tax(self):
         """
         完成税率
         :return:
         """
-        sql = "SELECT * FROM tax_progress order by year desc limit 1"
+        sql = "SELECT * FROM tax_progress order by year desc limit 10"
         self.dict_cur.execute(sql)
-        row = self.dict_cur.fetchone()
-        return row or {}
+        rows = self.dict_cur.fetchall()
+        return rows
+
+    def department_oversee_task_complete_num_sort(self, department_id=2):
+        """
+        部门完成数排名
+        :return:
+        """
+        # sql = """
+        # SELECT department_id, dict_department.name, `type`, status, COUNT(1) as num FROM (
+        #     SELECT oversee_task.id, d.department_id, `type`,
+        #         CASE WHEN group_concat(DISTINCT d.status)='任务完成' then '已完成'
+        #         WHEN group_concat(DISTINCT d.status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+        #         ELSE '进行中' END  as status
+        #     FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {}
+        #     GROUP BY oversee_task.id, d.department_id, `type`, d.status HAVING group_concat(DISTINCT d.status)='任务完成'
+        # ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id
+        # GROUP BY department_id, dict_department.name, `type`, status
+        # """
+        sql = """
+              SELECT department_id as id, dict_department.name, `type`, 
+                COUNT(task_num) as task_num, COUNT(complete_num) as complete_num FROM (
+                  SELECT oversee_task.id, d.department_id, `type`, 
+                    1 AS task_num, IF(group_concat(DISTINCT d.status)='任务完成', 1, NULL) as complete_num
+                    FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {} 
+                    GROUP BY oversee_task.id, d.department_id, `type`
+                ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id GROUP BY department_id, dict_department.name, `type`
+                """
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" WHERE d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        else:
+            sql = sql.format('')
+        self.dict_cur.execute(sql)
+        rows = list(self.dict_cur.fetchall())
+        oversee_type_dict = {"专项事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
+                             "重大事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
+                             "紧急事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
+                             "常规事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []}}
+        for row in rows:
+            oversee_type_dict[row['type']]['list'].append(row)
+            oversee_type_dict[row['type']]['total']['task_num'] += row['task_num']
+            oversee_type_dict[row['type']]['total']['complete_num'] += row['complete_num']
+        for task_type, data in oversee_type_dict.items():
+            ids = [row['id'] for row in data['list']]
+            diff_ids = list(set(child_dict.keys()).difference(set(ids)))
+            for department_id in diff_ids:
+                child_dict[department_id]['complete_num'] = 0
+                child_dict[department_id]['task_num'] = 0
+                data['list'].append(child_dict[department_id])
+            rows.sort(key=lambda x: (x['complete_num'], x['complete_num']/(x['task_num'] or 1), -x['id']), reverse=True)
+        return oversee_type_dict
 
 
 if __name__ == "__main__":
@@ -164,3 +224,4 @@ if __name__ == "__main__":
     print(am.oversee_task_statistics(3))
     print(am.get_newest_tax())
     print(am.oversee_task_trend(None))
+    print(am.department_oversee_task_complete_num_sort())

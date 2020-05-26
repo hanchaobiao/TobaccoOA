@@ -29,8 +29,8 @@ class LoginView(Resource):
         :return:
         """
         parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, help="用户名长度字符",  required=True)
-        parser.add_argument("password", type=str, help="密码不符合规范", required=True)
+        parser.add_argument("username", type=str, help="用户名必填",  required=True)
+        parser.add_argument("password", type=str, help="密码必填", required=True)
         args = parser.parse_args()
         model = AdminModel()
         result = model.login(args['username'], args['password'])
@@ -39,13 +39,26 @@ class LoginView(Resource):
         return json_response(**result)
 
 
+class MineView(Resource):
+
+    @staticmethod
+    @admin_login_req
+    def get():
+        """
+        推出
+        :return:
+        """
+        result = AdminModel().get_admin_by_username(request.user['username'])
+        return json_response(data=result)
+
+
 class LogoutView(Resource):
 
     @staticmethod
     @admin_login_req
     def post():
         """
-        登陆
+        推出
         :return:
         """
         RedisPool().set_offline_status(request.user['id'])
@@ -153,7 +166,7 @@ class AdminManageView(Resource):
 
     @staticmethod
     @admin_login_req
-    @allow_role_req()
+    @allow_role_req([1, 2, 3])
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=str, help='部门id', required=False)

@@ -92,6 +92,10 @@ class OverseeTaskModel(BaseDb):
         LEFT JOIN rel_task_coordinator ON oversee_task_detail.id=rel_task_coordinator.task_detail_id
         """
         conditions = []
+        if admin['role_id'] == 3:
+            conditions.append(" oversee_task.oversee_id={} ".format(admin['id']))
+        elif admin['role_id'] == 4:
+            conditions.append(" oversee_task_detail.agent_id={} ".format(admin['id']))
         if name:
             conditions.append("oversee_task.name like '%{}%'".format(name))
         if task_type:

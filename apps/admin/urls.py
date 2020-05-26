@@ -9,6 +9,8 @@ from apps.admin.views import *
 
 
 api.add_resource(LoginView, "/login")
+api.add_resource(LogoutView, "/logout")
+api.add_resource(MineView, "/mine")
 api.add_resource(AdminManageView, "/admin/manage")
 api.add_resource(AdminLoginLogView, "/admin/loginLog")
 api.add_resource(AdminOperateLogView, "/admin/operateLog")

@@ -34,6 +34,7 @@ from apps.admin import urls
 from apps.admin_operation import urls
 from apps.oversee import urls
 from apps.wish import urls
+from apps.report import urls
 
 
 def handle_500(e):

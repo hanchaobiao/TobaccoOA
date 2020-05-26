@@ -53,9 +53,10 @@ class AdminSelectView(Resource):
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=str, help='类型', required=False, default=None)
-        parser.add_argument("role_id", type=str, help='类型', required=False, default=None)
+        parser.add_argument("type", type=str, help='角色类型', choices=['oversee', 'agent'], required=True)
         args = parser.parse_args()
-        result = AdminModel().get_admin_by_department_role(args['department_id'], args['role_id'])
+        role_ids = [1, 2, 3] if args['type'] == 'oversee' else [4]
+        result = AdminModel().get_admin_by_department_role(args['department_id'], role_ids)
         return json_response(code=0, data=result)
 
 
@@ -402,8 +403,10 @@ class TaxProgressView(Resource):
         return json_response(data=tax)
 
     @admin_login_req
-    @allow_role_req([1, 2, 3])
+    @allow_role_req([4])
     def put(self):
+        if request.user['department_name'] != '财务管理科':
+            return json_response(code=0, message="非财务科不能编辑")
         form = TaxProgressForm()
         if form.validate():
             tax = AdminOperateModel().replace_tax_progress(form.data)

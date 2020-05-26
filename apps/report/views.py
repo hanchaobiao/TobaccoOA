@@ -23,20 +23,73 @@ from apps.admin_operation.task import upload_file
 from apps.oversee.task import send_sys_message
 
 
-class EmployeeReportView(Resource):
+class EmployeeStatusReportView(Resource):
     """
-    员工统计
+    员工状态统计
     """
 
-    __table_desc__ = '心愿'
-
-    @admin_login_req
-    def get(self):
+    @staticmethod
+    def get():
         parser = reqparse.RequestParser()
-        parser.add_argument("department_id", type=int, help='部门id', required=False, default=None)
+        parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
         args = parser.parse_args()
         model = ReportModel()
         result = model.get_employee_status(args['department_id'])
         return json_response(data=result)
 
 
+class LeaderRateView(Resource):
+    """
+    领导分布
+    """
+
+    @staticmethod
+    def get():
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        args = parser.parse_args()
+        model = ReportModel()
+        result = model.get_leader_statistics(args['department_id'])
+        return json_response(data=result)
+
+
+class TaskCompleteSituationView(Resource):
+    """
+    任务完成情况
+    """
+
+    @staticmethod
+    def get():
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        args = parser.parse_args()
+        model = ReportModel()
+        result = model.oversee_task_statistics(args['department_id'])
+        return json_response(data=result)
+
+
+class TaskTrendView(Resource):
+    """
+    任务趋势
+    """
+
+    @staticmethod
+    def get():
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        args = parser.parse_args()
+        model = ReportModel()
+        result = model.oversee_task_trend(args['department_id'])
+        return json_response(data=result)
+
+
+class TaxShowView(Resource):
+    """
+    税率
+    """
+
+    @staticmethod
+    def get():
+        model = ReportModel()
+        result = model.get_newest_tax()
+        return json_response(data=result)

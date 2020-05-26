@@ -5,9 +5,10 @@
 # @File    : urls.py
 # @Software: PyCharm
 from apps import api
-from apps.wish.views import EmployeeWishView, AuditWishView, SubmitWishView, EvaluationWishView
+from apps.report.views import *
 
-api.add_resource(EmployeeWishView, "/wish/release")
-api.add_resource(AuditWishView, "/wish/audit")
-api.add_resource(SubmitWishView, "/wish/submit")
-api.add_resource(EvaluationWishView, "/wish/evaluation")
+api.add_resource(EmployeeStatusReportView, "/report/employeeStatus")
+api.add_resource(LeaderRateView, "/report/leaderRate")
+api.add_resource(TaskCompleteSituationView, "/report/taskCompleteSituation")
+api.add_resource(TaskTrendView, "/report/taskTrend")
+api.add_resource(TaxShowView, "/report/tax")

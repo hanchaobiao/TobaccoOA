@@ -30,8 +30,11 @@ class AdminModel(BaseDb):
         :param username:
         :return:
         """
-        sql = "SELECT *, `level` as role_level, role_name FROM sys_admin " \
-              "JOIN sys_admin_role ON sys_admin.id=sys_admin_role.role_id WHERE username=%s"
+        sql = "SELECT sys_admin.id, username, password, real_name, position, department_id, " \
+              "dict_department.name as department_name, role_id, sys_admin_role.`level` as role_level, role_name, " \
+              "is_disable, sys_admin.is_delete, last_login_time " \
+              "FROM sys_admin JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
+              "LEFT JOIN dict_department ON department_id=dict_department.id WHERE username=%s"
         self.dict_cur.execute(sql, username)
         admin = self.dict_cur.fetchone()
         return admin
@@ -78,6 +81,15 @@ class AdminModel(BaseDb):
         self.dict_cur.execute(sql, department_id)
         return self.dict_cur.fetchone()['num']
 
+    def get_all_role_list(self):
+        """
+        获取全部角色
+        :return:
+        """
+        self.dict_cur.execute("SELECT * FROM sys_admin_role ")
+        rows = self.dict_cur.fetchall()
+        return rows
+
     def login(self, username, password):
         """
         登陆
@@ -96,7 +108,6 @@ class AdminModel(BaseDb):
                 self.update_last_login_time(admin['id'], login_time)
                 self.insert_login_log(admin['id'], login_time)
                 del admin['last_login_time']
-                del admin['add_time']
                 del admin['password']
                 return {"code": 0, "message": "登陆成功", "data": {"admin": admin, "token": self.get_jwt_token(admin)}}
             else:
@@ -265,7 +276,6 @@ class AdminModel(BaseDb):
               "FROM sys_admin LEFT JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
               "LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
               "WHERE sys_admin.is_delete=0 "
-        print(sql)
         if real_name:
             sql += " AND real_name like '%{}%' ".format(real_name.strip())
         if department_id:
@@ -284,20 +294,19 @@ class AdminModel(BaseDb):
             user['is_online'] = redis.check_online_status(user['id'])
         return result
 
-    def get_admin_by_department_role(self, department_id, role_id):
+    def get_admin_by_department_role(self, department_id, role_ids):
         """
         根据部门或权限搜索人员
         :param department_id:
-        :param role_id:
+        :param role_ids:
         :return:
         """
-        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin"
+        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin "
         constraints = []
-        if role_id:
-            sql += "  JOIN sys_admin_role ON role_id=sys_admin_role.id "
-            constraints.append(f"role_id={role_id}")
+        if role_ids:
+            constraints.append(" role_id IN %s" % str(tuple(role_ids)).replace(",)", ")"))
         if department_id:
-            constraints.append(f"department_id={department_id}")
+            constraints.append(f" department_id={department_id}")
         sql = self.append_query_conditions(sql, constraints)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
