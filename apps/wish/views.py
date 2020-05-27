@@ -33,6 +33,7 @@ class AuditWishView(Resource):
     __table_desc__ = '心愿'
 
     @admin_login_req
+    @allow_role_req([1])
     def put(self):
         form = AuditWishForm().from_json(request.json)
         if form.validate():
@@ -91,7 +92,6 @@ class EmployeeWishView(Resource):
         return json_response(data=result)
 
     @admin_login_req
-    @allow_role_req([1])
     def post(self):
         form = AddWishForm().from_json(request.values.to_dict())
         if form.validate():
@@ -109,7 +109,6 @@ class EmployeeWishView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
-    @allow_role_req([1])
     def put(self):
         form = UpdateWishForm().from_json(request.values.to_dict())
         if form.validate():

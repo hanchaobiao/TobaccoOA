@@ -272,7 +272,7 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, status, " \
               "sys_admin.add_time, department_id, dict_department.name as department, dict_department.leader_id, " \
-              "dict_department.level, sys_admin_role.role_name, sys_admin_role.id " \
+              "dict_department.level, role_id, sys_admin_role.role_name " \
               "FROM sys_admin LEFT JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
               "LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
               "WHERE sys_admin.is_delete=0 "

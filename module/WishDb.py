@@ -55,6 +55,9 @@ class WishModel(BaseDb):
         LEFT JOIN dict_department ON employee_wish.department_id = dict_department.id
         """
         conditions = []
+        if admin['role_id'] not in [1, 2, 3]:
+            conditions.append( "(employee_wish.agent_id={admin_id} OR employee_wish.employee_id={admin_id})".
+                               format(admin['id']))
         if name:
             conditions.append("employee_wish.name like '%{}%'".format(name))
         if status:

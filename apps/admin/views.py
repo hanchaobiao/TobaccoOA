@@ -152,7 +152,7 @@ class UpdatePasswordView(Resource):
             model.update_password(admin, form.data['password'])
             RedisPool().set_offline_status(admin['id'])  # 设置离线状态，从新登陆
             form.id = admin['id']
-            return json_response(message='修改成功', form=form, old_value=admin)
+            return json_response(message='修改成功')
         else:
             return json_response(errors=form.errors)
 
@@ -265,7 +265,7 @@ class ResetPasswordView(Resource):
     __table__ = 'sys_admin'
 
     @admin_login_req
-    @allow_role_req()
+    @allow_role_req([1])
     def put(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help='部门id', required=False)

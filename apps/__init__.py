@@ -16,6 +16,7 @@ from common.response import json_response
 
 
 app = Flask(__name__, static_folder='../media', static_url_path='/local_media')
+
 api = Api(app, catch_all_404s=True)
 
 app.debug = False
