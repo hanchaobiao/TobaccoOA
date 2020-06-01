@@ -10,10 +10,10 @@ from flask import request
 from common.response import json_response
 
 
-def allow_role_req(role_names=["超级管理员"]):
+def allow_role_req(role_ids=[1]):
     """
     允许哪些权限请求
-    :param role_names:
+    :param role_ids:
     :return:
     """
     def permissions_auth_req(method):
@@ -25,8 +25,8 @@ def allow_role_req(role_names=["超级管理员"]):
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
             admin = request.user
-            if admin['role_name'] not in role_names:
-                return json_response(code="PermissionDenied", message="权限不足")
-            return method(*args, **kwargs)  # 装饰方法是协程 需要await
+            if admin['role_id'] not in role_ids:
+                return json_response(code=1, message="权限不足")
+            return method(*args, **kwargs)
         return wrapper
     return permissions_auth_req

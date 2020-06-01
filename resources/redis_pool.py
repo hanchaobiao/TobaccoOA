@@ -6,7 +6,7 @@
 # @Software: PyCharm
 import redis
 
-from settings import REDIS
+from settings import REDIS, ACTIVE_EXPIRE
 
 
 class RedisPool(object):
@@ -38,7 +38,7 @@ class RedisPool(object):
         """
         key = "admin_online_{}".format(admin['id'])
         client = self.get_client()
-        client.set(key, str(admin), ex=3*60)
+        client.set(key, str(admin), ex=ACTIVE_EXPIRE)
         client.close()
 
     def set_offline_status(self, admin_id):

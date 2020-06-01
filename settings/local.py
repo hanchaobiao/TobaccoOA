@@ -28,7 +28,10 @@ REDIS = {
 # Token 有效期
 JWT_EXPIRE = 7*7*3600
 
+ACTIVE_EXPIRE = 30*60*60
+
 
 SECRET_KEY = "7e41I1kCRN5Y*pw13Mc4%rPL0FSj%^tA"  # 使用session 必须加上
 
-MEDIA_PREFIX = "http://127.0.0.1:5001"
+
+MEDIA_PREFIX = "http://127.0.0.1:5001/local_media"

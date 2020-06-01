@@ -5,10 +5,9 @@
 # @File    : urls.py
 # @Software: PyCharm
 from apps import api
-from apps.oversee.views import ReleaseOverseeTaskView, SubmitOverseeTaskView, AuditOverseeTaskView, OverseeMessageTaskView
+from apps.wish.views import EmployeeWishView, AuditWishView, SubmitWishView, EvaluationWishView
 
-
-api.add_resource(ReleaseOverseeTaskView, "/task/release")
-api.add_resource(SubmitOverseeTaskView, "/task/submit")
-api.add_resource(AuditOverseeTaskView, "/task/audit")
-api.add_resource(OverseeMessageTaskView, "/task/overseeMessage")
+api.add_resource(EmployeeWishView, "/wish/release")
+api.add_resource(AuditWishView, "/wish/audit")
+api.add_resource(SubmitWishView, "/wish/submit")
+api.add_resource(EvaluationWishView, "/wish/evaluation")

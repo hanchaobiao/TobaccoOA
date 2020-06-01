@@ -1,6 +1,10 @@
+import os
 import datetime
 
+from urllib import parse
+
 from resources.base import BaseDb
+from settings import MEDIA_PREFIX
 
 
 class OverseeTaskModel(BaseDb):
@@ -33,8 +37,22 @@ class OverseeTaskModel(BaseDb):
         :param task_id:
         :return:
         """
-        sql = "SELECT detail.*, sys_admin.real_name as agent_name FROM oversee_task_detail detail JOIN sys_admin " \
-              "ON detail.agent_id=sys_admin.id WHERE detail.task_id=%s"
+        sql = "SELECT progress FROM oversee_task WHERE id=%s"
+        self.dict_cur.execute(sql, task_id)
+        task = self.dict_cur.fetchone()
+
+        sql = "SELECT sys_file_manage.* FROM rel_task_file " \
+              "JOIN sys_file_manage ON rel_task_file.file_id=sys_file_manage.id WHERE task_id=%s"
+        self.dict_cur.execute(sql, task_id)
+        file_list = self.dict_cur.fetchall()
+        task['files'] = []
+        for item in file_list:
+            item['url'] = parse.urljoin(MEDIA_PREFIX, item['file_path'])
+            task['files'].append(item)
+        sql = "SELECT detail.*, sys_admin.real_name as agent_name, dict_department.name asdepartment_name " \
+              "FROM oversee_task_detail detail JOIN sys_admin " \
+              "ON detail.agent_id=sys_admin.id JOIN dict_department ON detail.department_id=dict_department.id " \
+              "WHERE detail.task_id=%s"
         self.dict_cur.execute(sql, task_id)
         task_detail_list = self.dict_cur.fetchall()
         sql = "SELECT rel_task_coordinator.*, sys_admin.real_name as coordinator_name FROM rel_task_coordinator " \
@@ -44,12 +62,17 @@ class OverseeTaskModel(BaseDb):
         sql = "SELECT * FROM oversee_task_detail_file WHERE task_id=%s"
         self.dict_cur.execute(sql, task_id)
         file_list = self.dict_cur.fetchall()
-
+        print(file_list)
         for task_detail in task_detail_list:
             task_detail['coordinators'] = [item for item in coordinator_list
                                            if item['task_detail_id'] == task_detail['id']]
-            task_detail['files'] = [item for item in file_list if item['task_detail_id'] == task_detail['id']]
-        return task_detail_list
+            task_detail['files'] = []
+            for item in file_list:
+                if item['task_detail_id'] == task_detail['id']:
+                    item['url'] = parse.urljoin(MEDIA_PREFIX, item['file_path'])
+                    task_detail['files'].append(item)
+        task['task_detail_list'] = task_detail_list
+        return task
 
     def get_oversee_task_list(self, admin, name, task_type, relation, page, page_size):
         """
@@ -69,6 +92,10 @@ class OverseeTaskModel(BaseDb):
         LEFT JOIN rel_task_coordinator ON oversee_task_detail.id=rel_task_coordinator.task_detail_id
         """
         conditions = []
+        if admin['role_id'] == 3:
+            conditions.append(" oversee_task.oversee_id={} ".format(admin['id']))
+        elif admin['role_id'] == 4:
+            conditions.append(" oversee_task_detail.agent_id={} ".format(admin['id']))
         if name:
             conditions.append("oversee_task.name like '%{}%'".format(name))
         if task_type:
@@ -79,7 +106,7 @@ class OverseeTaskModel(BaseDb):
             conditions.append("oversee_task.oversee_id={}".format(admin['id']))
         elif relation == '由我经办':
             conditions.append("oversee_task_detail.agent_id={}".format(admin['id']))
-        else:
+        elif relation == '由我协办':
             conditions.append("rel_task_coordinator.coordinator_id={}".format(admin['id']))
         sql = self.append_query_conditions(sql, conditions)
         sql += " GROUP BY oversee_task.id"
@@ -119,24 +146,41 @@ class OverseeTaskModel(BaseDb):
                 people_ids.extend(res['agent_ids'].split(","))
             if res['coordinator_ids']:
                 people_ids.extend(res['coordinator_ids'].split(","))
-        people_ids = str(tuple(set(people_ids))).replace(",)", ")")
         return people_ids
 
     @staticmethod
     def convert_real_name(data_list, peoples):
         people_dict = {int(item['id']): item['real_name'] for item in peoples}
         for res in data_list:
+            res['agents'] = []
+            res['coordinators'] = []
             res['oversee_name'] = people_dict.get(res['oversee_id'])
             res['release_name'] = people_dict.get(res['release_id'])
-            res['agent_name'] = []
             if res['agent_ids']:
-                for agent_id in res['agent_ids'].split(","):
-                    res['agent_name'].append(people_dict.get(int(agent_id)))
-            res['coordinator_name'] = []
+                for agent_id in list(set(res['agent_ids'].split(","))):
+                    res['agents'].append({"id": int(agent_id), "name": people_dict.get(int(agent_id))})
             if res['coordinator_ids']:
-                for coordinator_id in res['coordinator_ids'].split(","):
-                    res['coordinator_name'].append(people_dict.get(int(coordinator_id)))
+                for coordinator_id in list(set(res['coordinator_ids'].split(","))):
+                    res['coordinators'].append({"id": int(coordinator_id), "name": people_dict.get(int(coordinator_id))})
         return data_list
+
+    def generate_task_no(self, task_type):
+        """
+        生成任务编号
+        :param task_type:
+        :return:
+        """
+        bh = {'重大事务': "ZZ", '紧急事务': 'JJ', '专项事务': 'ZX', '常规事务': 'CC'}
+        today = datetime.datetime.now().date().strftime('%Y%m%d')
+        task_no = f"{bh[task_type]}{today}"
+        sql = "SELECT MAX(task_no) as max_task_no FROM oversee_task WHERE task_no LIKE '{}%'".format(task_no)
+        self.dict_cur.execute(sql)
+        row = self.dict_cur.fetchone()
+        if row['max_task_no']:
+            task_no = task_no + str(int(row['max_task_no'][-3:])+1).zfill(3)
+        else:
+            task_no = f'{task_no}001'
+        return task_no
 
     def update_oversee_task(self, task):
         """
@@ -156,6 +200,7 @@ class OverseeTaskModel(BaseDb):
         :param task_detail: 子任务
         :return:
         """
+        task_detail['status'] = '待签收'
         task_detail['task_id'] = task_id
         sql = "INSERT INTO {}({}) VALUES({})"
         self.execute_insert('oversee_task_detail', **task_detail)
@@ -182,7 +227,7 @@ class OverseeTaskModel(BaseDb):
         :param task_id:
         :return:
         """
-        sql = "SELECT COUNT(*) AS num FROM oversee_task_detail WHERE task_id=%s AND status='已完成'"
+        sql = "SELECT COUNT(*) AS num FROM oversee_task_detail WHERE task_id=%s AND status='任务完成'"
         self.dict_cur.execute(sql, task_id)
         count = self.dict_cur.fetchone()['num']
         if count > 0:
@@ -203,7 +248,7 @@ class OverseeTaskModel(BaseDb):
         """
         sql = "SELECT IFNULL(SUM(IF(status!=%s, 1, 0)), 0) AS unfinished_num, " \
               "COUNT(*) AS `index` FROM oversee_task_detail WHERE task_id=%s AND end_time < %s"
-        self.dict_cur.execute(sql, ('已完成', task_detail['id'], task_detail['end_time']))
+        self.dict_cur.execute(sql, ('任务完成', task_detail['task_id'], task_detail['end_time']))
         result = self.dict_cur.fetchone()
         result['index'] += 1
         return result
@@ -218,7 +263,7 @@ class OverseeTaskModel(BaseDb):
         if len(ids) == 0:
             return 0
         ids = str(tuple(ids)).replace(",)", ")")
-        sql = "DELETE FROM oversee_task_detail_file WHERE task_detail_id=%s AND id in %s" % (task_detail_id, ids)
+        sql = "DELETE FROM oversee_task_detail_file WHERE task_detail_id=%s AND id not in %s" % (task_detail_id, ids)
         self.dict_cur.execute(sql)
 
     def update_task_progress(self, task_id):
@@ -229,28 +274,42 @@ class OverseeTaskModel(BaseDb):
         """
         sql = """UPDATE oversee_task as task, 
             (SELECT task_id, CAST(IFNULL(SUM(IF(`status`='任务完成',1,0)), 0)/COUNT(*)*100 AS SIGNED) AS progress,
-             MAX(audit_time) as completion_time  FROM oversee_task_detail WHERE task_id=10 GROUP BY task_id) as detail
+             MAX(audit_time) as completion_time  FROM oversee_task_detail WHERE task_id=%s GROUP BY task_id) as detail
             SET task.progress=detail.progress, task.completion_time=IF(detail.progress=100,detail.completion_time,NULL)
-            WHERE detail.task_id=task.id
+            WHERE detail.task_id=task.id AND task.id=%s
             """
-        self.dict_cur.execute(sql)
+        print(sql)
+        self.dict_cur.execute(sql, (task_id, task_id))
 
-    def get_oversee_message_list(self, admin, msg_type, page, page_size):
+    def get_oversee_message_list(self, admin, only_unread, page, page_size):
         """
         获取督办类型
         :param admin:
-        :param msg_type:
+        :param only_unread:
         :param page:
         :param page_size:
         :return:
         """
-        sql = "SELECT * FROM oversee_message "
-        if msg_type == 'send':
-            sql += " WHERE oversee_id={} ".format(admin['id'])
-        else:
-            sql += " WHERE agent_id={} ".format(admin['id'])
+        sql = "SELECT * FROM oversee_message WHERE receive_id=%s" % admin['id']
+        if only_unread:
+            sql += " WHERE receive_time IS NULL "
         result = self.query_paginate(sql, sort=['send_time', 'desc'], page=page, page_size=page_size)
         return result
+
+    def reset_rel_task_file(self, task_id, file_ids):
+        """
+        重置任务文件
+        :param task_id:
+        :param file_ids:
+        :return:
+        """
+        sql = "DELETE FROM rel_task_file WHERE task_id={}".format(task_id)
+        if len(file_ids):
+            sql += " AND file_id NOT IN %s" % (str(tuple(file_ids)).replace(",)", ")"))
+        self.dict_cur.execute(sql)
+        if len(file_ids):
+            sql = f"INSERT IGNORE INTO rel_task_file(task_id, file_id) VALUES({task_id}, %s)"
+            self.dict_cur.executemany(sql, file_ids)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import os
 # 通过环境变量DEPLOY判断读取的配置文件
 # linux 下 在个人目录中的 .bash_profile设置环境变量
-# export DEPLOY=prod
+# report DEPLOY=prod
 # os.environ.setdefault('DEPLOY', 'prod')
 deploy = os.environ.get("DEPLOY") or "dev"
 print('此时的环境变量', deploy)

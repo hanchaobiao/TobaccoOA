@@ -30,7 +30,11 @@ class AdminModel(BaseDb):
         :param username:
         :return:
         """
-        sql = "SELECT * FROM sys_admin WHERE username=%s"
+        sql = "SELECT sys_admin.id, username, password, real_name, position, department_id, " \
+              "dict_department.name as department_name, role_id, sys_admin_role.`level` as role_level, role_name, " \
+              "is_disable, sys_admin.is_delete, last_login_time " \
+              "FROM sys_admin JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
+              "LEFT JOIN dict_department ON department_id=dict_department.id WHERE username=%s"
         self.dict_cur.execute(sql, username)
         admin = self.dict_cur.fetchone()
         return admin
@@ -77,6 +81,15 @@ class AdminModel(BaseDb):
         self.dict_cur.execute(sql, department_id)
         return self.dict_cur.fetchone()['num']
 
+    def get_all_role_list(self):
+        """
+        获取全部角色
+        :return:
+        """
+        self.dict_cur.execute("SELECT * FROM sys_admin_role ")
+        rows = self.dict_cur.fetchall()
+        return rows
+
     def login(self, username, password):
         """
         登陆
@@ -86,16 +99,15 @@ class AdminModel(BaseDb):
         """
         admin = self.get_admin_by_username(username)
         if admin:
-            print(self.get_md5_password(password))
             if admin['is_disable']:
-                return {"code": 1, "message": "账户被禁用"}
-
+                return {"code": 1, "message": "账户已被禁用"}
+            if admin['is_delete']:
+                return {"code": 1, "message": "账户已被删除"}
             elif admin['password'] == self.get_md5_password(password):
                 login_time = datetime.datetime.now()
                 self.update_last_login_time(admin['id'], login_time)
                 self.insert_login_log(admin['id'], login_time)
                 del admin['last_login_time']
-                del admin['add_time']
                 del admin['password']
                 return {"code": 0, "message": "登陆成功", "data": {"admin": admin, "token": self.get_jwt_token(admin)}}
             else:
@@ -258,11 +270,12 @@ class AdminModel(BaseDb):
         :param page_size:
         :return:
         """
-        sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, add_time, "\
-              "department_id, dict_department.name as department, dict_department.leader_id, dict_department.level " \
-              "FROM sys_admin LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
+        sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, status, " \
+              "sys_admin.add_time, department_id, dict_department.name as department, dict_department.leader_id, " \
+              "dict_department.level, role_id, sys_admin_role.role_name " \
+              "FROM sys_admin LEFT JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
+              "LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
               "WHERE sys_admin.is_delete=0 "
-        print(sql)
         if real_name:
             sql += " AND real_name like '%{}%' ".format(real_name.strip())
         if department_id:
@@ -275,32 +288,25 @@ class AdminModel(BaseDb):
         result = self.query_paginate(sql, page=page, page_size=page_size)
         if len(result['list']) == 0:
             return result
-        ids = [item['id'] for item in result['list']]
-        sql = "SELECT DISTINCT admin_id, role_id, role_name, level FROM rel_sys_admin_role JOIN sys_admin_role ON " \
-              "rel_sys_admin_role.role_id=sys_admin_role.id " \
-              "WHERE admin_id IN %s ORDER BY level DESC" % str(tuple(ids)).replace(",)", ")")
-        self.dict_cur.execute(sql)
-        admin_roles = self.dict_cur.fetchall()
+
         redis = RedisPool()
         for user in result['list']:
-            user['roles'] = [role for role in admin_roles if role['admin_id'] == user['id']]
             user['is_online'] = redis.check_online_status(user['id'])
         return result
 
-    def get_admin_by_department_role(self, department_id, role_id):
+    def get_admin_by_department_role(self, department_id, role_ids):
         """
         根据部门或权限搜索人员
         :param department_id:
-        :param role_id:
+        :param role_ids:
         :return:
         """
         sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin "
         constraints = []
-        if role_id:
-            sql += " JOIN rel_sys_admin_role ON admin_id=sys_admin.id "
-            constraints.append(f"role_id={role_id}")
+        if role_ids:
+            constraints.append(" role_id IN %s" % str(tuple(role_ids)).replace(",)", ")"))
         if department_id:
-            constraints.append(f"department_id={department_id}")
+            constraints.append(f" department_id={department_id}")
         sql = self.append_query_conditions(sql, constraints)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
@@ -313,16 +319,12 @@ class AdminModel(BaseDb):
         :return:
         """
         try:
-            role_ids = admin.pop("role_ids")
             user = self.get_admin_by_username(admin['username'])
             if user:
                 return {"code": 1, "message": "用户名已被使用，请重新输入"}
             admin['password'] = self.get_md5_password(admin['password'])
             admin['add_time'] = datetime.datetime.now()
             admin['id'] = self.execute_insert(self.table_name, **admin)
-            insert_list = [(admin['id'], role_id) for role_id in role_ids]
-            sql = "INSERT INTO rel_sys_admin_role(admin_id, role_id, add_time) VALUES(%s,%s,now()) "
-            self.dict_cur.executemany(sql, insert_list)
             return {"code": 0, "message": "添加成功"}
         except pymysql.err.IntegrityError:
             return {"code": 1, "message": "该用户名已被使用"}
@@ -335,30 +337,14 @@ class AdminModel(BaseDb):
         :return:
         """
         try:
-            role_ids = update_data.pop("role_ids")
             if update_data['password']:
                 update_data['password'] = self.get_md5_password(update_data['password'])
             else:
                 del update_data['password']
             self.execute_update('sys_admin', update_data, origin_data)
-            self.update_admin_role(update_data, role_ids)
             return {"code": 0, "data": update_data}
         except pymysql.err.IntegrityError:
             return {"code": 1, "message": "该用户名已被使用"}
-
-    def update_admin_role(self, admin, role_ids):
-        """
-        修改角色
-        :param admin:
-        :param role_ids:
-        :return:
-        """
-        sql = "DELETE FROM rel_sys_admin_role WHERE admin_id=%s AND role_id NOT IN %s" % \
-              (admin['id'], str(tuple(role_ids)).replace(",)", ")"))
-        self.dict_cur.execute(sql)
-        sql = "INSERT IGNORE INTO rel_sys_admin_role(admin_id, role_id, add_time) VALUES(%s,%s,now())"
-        insert_list = [(admin['id'], role_id) for role_id in role_ids]
-        self.dict_cur.executemany(sql, insert_list)
 
     def delete_admin(self, admin_id):
         """
@@ -370,15 +356,16 @@ class AdminModel(BaseDb):
         count = self.dict_cur.execute(sql, admin_id)
         return count
 
-    def get_all_role_list(self):
+    def get_my_message_list(self, admin, msg_type, page, page_size):
         """
-        获取全部角色列表
+        获取个人消息
         :return:
         """
-        sql = "SELECT * FROM sys_admin_role"
-        self.dict_cur.execute(sql)
-        rows = self.dict_cur.fetchall()
-        return rows
+        sql = "SELECT * FROM sys_message WHERE receive_id={} AND receive_time IS NULL".format(admin['id'])
+        if msg_type:
+            sql += " AND `type`='{}'".format(msg_type)
+        result = self.query_paginate(sql, sort=['send_time', 'desc'], page=page, page_size=page_size)
+        return result
 
 
 if __name__ == "__main__":

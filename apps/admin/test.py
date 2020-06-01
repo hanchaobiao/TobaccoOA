@@ -114,11 +114,11 @@ def delete_admin():
 
 if __name__ == "__main__":
     # pass
-    # test_login()
+    login()
     # get_login_log()
     # get_operate_log()
     # test_update_password()
     # test_get_admin()
     # post_admin()
-    put_admin()
+    # put_admin()
     # test_delete_admin()

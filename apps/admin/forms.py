@@ -27,15 +27,18 @@ class AddAdminForm(Form):
     添加管理员
     """
     username = StringField("用户名", validators=[DataRequired(message="用户名必须为5-16字符长度"), Length(min=5, max=16)])
-    password = StringField("密码", validators=[DataRequired(message="密码必须为5-16字符长度"), Length(min=5, max=16)])
+    password = StringField("密码", validators=[DataRequired(message="密码必须为5-16字符长度"), Length(min=5, max=16)],
+                           default='666666')
     real_name = StringField("姓名", validators=[DataRequired(message="姓名必填"), Length(min=1, max=10)])
     sex = StringField("性别", validators=[AnyOf(['男', '女'])])
+    status = StringField("员工状态", validators=[AnyOf(['在岗正式工', '在岗人事代理', '在岗劳务派遣',  '退岗', '内退', '退休',
+                                                    '改非'])])
     position = StringField("职务", validators=[DataRequired(message="职务必填")])
     department_id = IntegerField("所属部门", validators=[DataRequired(message="部门必填")])
     is_disable = IntegerField("是否禁用", validators=[AnyOf([0, 1])])
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                         Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
-    role_ids = MultipleFileField("角色", validators=[DataRequired("请选择角色")])
+    role_id = IntegerField("角色", validators=[DataRequired("请选择角色")])
 
 
 class UpdateAdminForm(Form):
@@ -46,12 +49,14 @@ class UpdateAdminForm(Form):
     password = StringField("密码")
     real_name = StringField("姓名", validators=[DataRequired(message="姓名必填"), Length(min=1, max=10)])
     sex = StringField("性别", validators=[AnyOf(['男', '女'])])
+    status = StringField("员工状态", validators=[AnyOf(['在岗正式工', '在岗人事代理', '在岗劳务派遣', '退岗', '内退',
+                                                    '退休', '改非'])])
     position = StringField("职务", validators=[DataRequired(message="职务必填")])
     department_id = IntegerField("所属部门", validators=[DataRequired(message="部门必填")])
     is_disable = IntegerField("是否禁用", validators=[AnyOf([0, 1])])
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                                             Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
-    role_ids = MultipleFileField("角色", validators=[DataRequired("请选择角色")])
+    role_id = IntegerField("角色", validators=[DataRequired("请选择角色")])
 
     # noinspection PyMethodMayBeStatic
     def validate_password(self, field):

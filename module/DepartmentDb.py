@@ -97,6 +97,19 @@ class DepartmentModel(BaseDb):
         department = self.dict_cur.fetchone()
         return department
 
+    def get_child_department_by_ids(self, department_id):
+        """
+        获取部门
+        :param department_id:
+        :return:
+        """
+        sql = "SELECT id, name FROM dict_department WHERE is_delete=0 AND (id={pid} or path like '{pid},%' " \
+              "or path like '%,{pid},%' or path like '%,{pid}')".format(pid=department_id)
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        child_dict = {row['id']: row for row in rows}
+        return child_dict
+
     def get_department_by_name(self, name):
         """
         根据名称获取部门

@@ -16,3 +16,6 @@ PyJWT
 wtforms
 uwsgi
 wtforms_json
+redis
+# mod_wsgi
+# pdfkit
