@@ -6168,3 +6168,1269 @@ Mon, 18 May 2020 02:09:50 _internal.py[line:122] INFO 192.168.43.160 - - [18/May
 Mon, 18 May 2020 02:09:59 _internal.py[line:122] INFO 192.168.43.160 - - [18/May/2020 02:09:59] "GET /fileManage?page=1&page_size=20 HTTP/1.1" 200 -
 Mon, 18 May 2020 02:10:06 _internal.py[line:122] INFO 192.168.43.160 - - [18/May/2020 02:10:06] "OPTIONS /fileManage HTTP/1.1" 200 -
 Mon, 18 May 2020 02:10:06 _internal.py[line:122] INFO 192.168.43.160 - - [18/May/2020 02:10:06] "POST /fileManage HTTP/1.1" 200 -
+Tue, 19 May 2020 01:36:23 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Sun, 24 May 2020 13:36:58 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Sun, 24 May 2020 13:41:58 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Mon, 25 May 2020 01:28:56 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Mon, 25 May 2020 02:08:54 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Mon, 25 May 2020 03:22:21 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:27:08 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 22, in __new__
+    cls.pool = MysqlPool.__instance.get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:27:08 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:27:12 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:27:12 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:27:13 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:27:13 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:27:17 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:27:17 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:28:19 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 22, in __new__
+    cls.pool = MysqlPool.__instance.get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:28:19 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:28:58 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 22, in __new__
+    cls.pool = MysqlPool.__instance.get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:28:58 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:29:00 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:29:01 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:29:03 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:29:03 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:29:05 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:29:05 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:29:07 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:29:07 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:29:47 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 325, in connection
+    con = self._idle_cache.pop(0)
+IndexError: pop from empty list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 582, in connect
+    **kwargs)
+  File "C:\software\python37\lib\socket.py", line 727, in create_connection
+    raise err
+  File "C:\software\python37\lib\socket.py", line 716, in create_connection
+    sock.connect(sa)
+OSError: [WinError 10065] 套接字操作尝试一个无法连接的主机。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 468, in wrapper
+    resp = resource(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask\views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\flask_restful\__init__.py", line 583, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\utils\jwt_login_decorators.py", line 44, in wrapper
+    return method(*args, **kwargs)
+  File "C:\code\student\python\flask\TobaccoOA\apps\admin\views.py", line 165, in get
+    am = AdminModel()
+  File "C:\code\student\python\flask\TobaccoOA\module\AdminDb.py", line 24, in __init__
+    BaseDb.__init__(self)
+  File "C:\code\student\python\flask\TobaccoOA\resources\base.py", line 14, in __init__
+    self.pool = MysqlPool().get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 22, in __new__
+    cls.pool = MysqlPool.__instance.get_pool()
+  File "C:\code\student\python\flask\TobaccoOA\resources\mysql_pool.py", line 42, in get_pool
+    autocommit=True
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in __init__
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 267, in <listcomp>
+    idle = [self.dedicated_connection() for i in range(mincached)]
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 338, in dedicated_connection
+    return self.connection(False)
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 327, in connection
+    con = self.steady_connection()
+  File "C:\software\python37\lib\site-packages\DBUtils\PooledDB.py", line 275, in steady_connection
+    self._failures, self._ping, True, *self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 139, in connect
+    failures, ping, closeable, *args, **kwargs)
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 192, in __init__
+    self._store(self._create())
+  File "C:\software\python37\lib\site-packages\DBUtils\SteadyDB.py", line 211, in _create
+    con = self._creator(*self._args, **self._kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\__init__.py", line 94, in Connect
+    return Connection(*args, **kwargs)
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 327, in __init__
+    self.connect()
+  File "C:\software\python37\lib\site-packages\pymysql\connections.py", line 629, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '47.99.51.135' ([WinError 10065] 套接字操作尝试一个无法连接的主机。)")
+
+Mon, 25 May 2020 03:29:47 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 25 May 2020 03:30:07 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 26 May 2020 02:44:22 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 26 May 2020 02:44:22 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:07 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:19 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:22 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:22 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:26 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Mon, 01 Jun 2020 23:38:26 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:02:02 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:02:02 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:30:01 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:34:34 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:34:34 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:34:39 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:34:39 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:34:58 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:35:55 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\software\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\software\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\software\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 00:57:53 _internal.py[line:113] INFO  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
+Tue, 02 Jun 2020 01:18:40 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:19:30 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:23:31 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:43:26 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:43:35 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:45:55 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:45:55 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:45:56 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:45:56 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:46:01 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:46:01 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:46:10 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+Tue, 02 Jun 2020 01:46:10 __init__.py[line:39] ERROR Traceback (most recent call last):
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1791, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\project\python37\lib\site-packages\flask\app.py", line 1774, in raise_routing_exception
+    raise request.routing_exception
+  File "C:\project\python37\lib\site-packages\flask\ctx.py", line 336, in match_request
+    self.url_adapter.match(return_rule=True)
+  File "C:\project\python37\lib\site-packages\werkzeug\routing.py", line 1945, in match
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
