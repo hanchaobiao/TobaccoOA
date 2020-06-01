@@ -76,6 +76,7 @@ class ReleaseOverseeTaskView(Resource):
                 oversee_messages = []
                 file_ids = task.pop("file_ids")
                 task['release_id'] = request.user['id']
+                task['task_no'] = model.generate_task_no(task['type'])
                 task['id'] = model.execute_insert(self.__table__, **task)
                 file_list = [{"file_id": file_id, "task_id": task['id']} for file_id in file_ids]
                 model.execute_insert_many('rel_task_file', file_list)
@@ -156,12 +157,12 @@ class ReleaseOverseeTaskView(Resource):
             task = model.get_data_by_id(self.__table__, args['id'])
             if task:
                 model.start_transaction()
-                model.delete_task(args['id'])
+                result = model.delete_task(args['id'])
                 model.delete_log(self.__table__, args['id'], "删除任务：{}".format(task['name']), task)
                 model.conn.commit()
+                return json_response(**result)
             else:
-                pass
-            return json_response(message="删除")
+                return json_response(code=1, message="任务不存在")
         except Exception as e:
             print(e)
             import traceback
@@ -232,9 +233,10 @@ class SubmitOverseeTaskView(Resource):
                 model.update_log(self.__table__, update_data['id'], message, task_detail, update_data)
                 # 删除文件
                 model.delete_file_by_ids(update_data['id'], file_ids)
-                file_list = upload_file('oversee', task_id=task_detail['task_id'], task_detail_id=task_detail['id'])
-                print(file_list)
-                model.execute_insert_many('oversee_task_detail_file', file_list)
+                result = upload_file('oversee', task_id=task_detail['task_id'], task_detail_id=task_detail['id'])
+                if result['code'] == 1:
+                    return json_response(**result)
+                model.execute_insert_many('oversee_task_detail_file', result['data'])
                 send_sys_message(oversee_messages)
                 model.conn.commit()
                 return json_response(code=0, message="经办成功")

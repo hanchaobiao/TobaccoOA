@@ -30,7 +30,7 @@ class AddOverseeTaskForm(Form):
     """
     添加督办任务
     """
-    task_no = StringField("任务编号", validators=[DataRequired(message="任务名称不能为空"), Length(max=50)])
+    # task_no = StringField("任务编号", validators=[DataRequired(message="任务名称不能为空"), Length(max=50)])
     type = StringField("任务类型", validators=[AnyOf(['重大事务', '紧急事务', '专项事务', '常规事务'])])
     name = StringField("任务名称", validators=[DataRequired(message="任务名称不能为空"), Length(max=60)])
     file_ids = MultipleFileField(label="涉及文件")
@@ -59,7 +59,7 @@ class UpdateOverseeTaskForm(Form):
     """
     id = IntegerField("任务id", validators=[DataRequired("任务id必填")])
     type = StringField("任务类型", validators=[AnyOf(['重大事务', '紧急事务', '专项事务', '常规事务'])])
-    task_no = StringField("任务编号", validators=[DataRequired(message="任务名称不能为空"), Length(max=50)])
+    # task_no = StringField("任务编号", validators=[DataRequired(message="任务名称不能为空"), Length(max=50)])
     name = StringField("任务名称", validators=[DataRequired(message="任务名称不能为空"), Length(max=60)])
     file_ids = MultipleFileField(label="涉及文件")
     introduce = StringField("任务介绍", validators=[DataRequired(message="任务介绍不能为空")])

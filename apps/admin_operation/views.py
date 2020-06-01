@@ -79,6 +79,7 @@ class DepartmentView(Resource):
         return json_response(data=result)
 
     @admin_login_req
+    @allow_role_req([1])
     def post(self):
         form = AddDepartmentForm().from_json(request.json)
         if form.validate():
@@ -94,6 +95,7 @@ class DepartmentView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1])
     def put(self):
         form = UpdateDepartmentForm().from_json(request.json)
         if form.validate():
@@ -118,6 +120,7 @@ class DepartmentView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
+    @allow_role_req([1])
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='部门id', required=True)
@@ -146,6 +149,7 @@ class FileManageView(Resource):
     __table__ = 'sys_file_manage'
 
     @admin_login_req
+    @allow_role_req([1])
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument("file_name", type=str, help='文件名', required=False, default=None)
@@ -162,20 +166,23 @@ class FileManageView(Resource):
         return json_response(data=result)
 
     @admin_login_req
+    @allow_role_req([1])
     def post(self):
         if 'file' not in request.files:
             return json_response(code=1, message='请选择文件')
         model = FileManageModel()
         try:
             model.start_transaction()
-            file_list = upload_file('system')
-            for index, file_info in enumerate(file_list):
+            result = upload_file('system')
+            if result['code'] == 1:
+                return json_response(**result)
+            for index, file_info in enumerate(result['data']):
                 file_id = model.execute_insert(self.__table__, **file_info)
                 file_info['id'] = file_id
                 model.insert_log(self.__table__, file_info['id'], "上传文件：{}".format(file_info['file_name']),
                                  file_info)
             model.conn.commit()
-            return json_response(code=0, message="上传成功", data=file_list)
+            return json_response(code=0, message="上传成功", data=result['data'])
         except pymysql.err.IntegrityError:
             message = "文件名:{}已存在".format(file_info['file_name'])
         except Exception as e:
@@ -186,6 +193,7 @@ class FileManageView(Resource):
         return json_response(code=1, message=message)
 
     @admin_login_req
+    @allow_role_req([1])
     def put(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='文件id', required=True)
@@ -211,14 +219,18 @@ class DownloadFileView(Resource):
     """
 
     @staticmethod
+    @admin_login_req
+    @allow_role_req([1, 2, 3, 4])
     def post():
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='文件id', required=True)
+        parser.add_argument("file_type", type=str, choices=['wish', 'oversee_submit', 'file_db'],
+                            help='文件id', required=True)
         args = parser.parse_args()
         try:
             file_info = FileManageModel().get_file_by_id(args['id'])
             if file_info:
-                path = os.path.join(MEDIA_PATH, file_info['path'])
+                path = os.path.join(MEDIA_PATH, file_info['file_path'])
                 with open(path, mode='rb') as f:
                     content = f.read()
                 response = make_response(content)

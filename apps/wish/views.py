@@ -101,8 +101,10 @@ class EmployeeWishView(Resource):
             data['employee_id'] = request.user['id']
             model = WishModel()
             data['id'] = model.execute_insert(self.__table__, **data)
-            file_list = upload_file('wish', wish_id=data['id'], file_type=1)
-            model.execute_insert_many('employee_wish_file', file_list)
+            result = upload_file('wish', wish_id=data['id'], file_type=1)
+            if result['code'] == 1:
+                return json_response(**result)
+            model.execute_insert_many('employee_wish_file', result['data'])
             model.insert_log(self.__table__, data['id'], '发布心愿：{}'.format(data['name']))
             return json_response(data=data, message="添加成功")
         else:
@@ -121,7 +123,9 @@ class EmployeeWishView(Resource):
                 return json_response(code=1, message="该心愿已经审核，无法修改")
             file_ids = update_data.pop("file_ids")
             model.execute_update(self.__table__, update_data, wish)
-            file_list = upload_file('wish', wish_id=wish['id'], file_type=1)
+            result = upload_file('wish', wish_id=wish['id'], file_type=1)
+            if result['code'] == 1:
+                return json_response(**result)
             model.reset_wish_file(wish['id'], file_ids)
             model.update_log(self.__table__, wish['id'], '修改心愿：{}'.format(update_data['name']), wish, update_data)
             return json_response(data=update_data, message="修改成功")
@@ -205,8 +209,10 @@ class SubmitWishView(Resource):
                 if wish['agent_id'] != request.user['id']:
                     return json_response(code=1, message="无权限经办该心愿")
                 data['id'] = model.execute_update(self.__table__, data, wish)
-                file_list = upload_file('wish', wish_id=data['id'], file_type=2)
-                model.execute_insert_many('employee_wish_file', file_list)
+                result = upload_file('wish', wish_id=data['id'], file_type=2)
+                if result['code'] == 1:
+                    return json_response(**result)
+                model.execute_insert_many('employee_wish_file', result['data'])
                 model.update_log(self.__table__, data['id'], '经办心愿：{}上传完成信息'.format(wish['name']), wish, data)
                 model.conn.commit()
                 return json_response(data=data, message="心愿办理资料提交成功")

@@ -364,7 +364,7 @@ class AdminModel(BaseDb):
         sql = "SELECT * FROM sys_message WHERE receive_id={} AND receive_time IS NULL".format(admin['id'])
         if msg_type:
             sql += " AND `type`='{}'".format(msg_type)
-        result = self.query_paginate(sql, sort=['add_time', 'desc'], page=page, page_size=page_size)
+        result = self.query_paginate(sql, sort=['send_time', 'desc'], page=page, page_size=page_size)
         return result
 
 

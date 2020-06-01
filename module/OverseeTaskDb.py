@@ -146,7 +146,6 @@ class OverseeTaskModel(BaseDb):
                 people_ids.extend(res['agent_ids'].split(","))
             if res['coordinator_ids']:
                 people_ids.extend(res['coordinator_ids'].split(","))
-        people_ids = str(tuple(set(people_ids))).replace(",)", ")")
         return people_ids
 
     @staticmethod
@@ -159,11 +158,29 @@ class OverseeTaskModel(BaseDb):
             res['release_name'] = people_dict.get(res['release_id'])
             if res['agent_ids']:
                 for agent_id in list(set(res['agent_ids'].split(","))):
-                    res['agents'].append({"id": agent_id, "name": people_dict.get(int(agent_id))})
+                    res['agents'].append({"id": int(agent_id), "name": people_dict.get(int(agent_id))})
             if res['coordinator_ids']:
                 for coordinator_id in list(set(res['coordinator_ids'].split(","))):
-                    res['coordinators'].append({"id": coordinator_id, "name": people_dict.get(int(coordinator_id))})
+                    res['coordinators'].append({"id": int(coordinator_id), "name": people_dict.get(int(coordinator_id))})
         return data_list
+
+    def generate_task_no(self, task_type):
+        """
+        生成任务编号
+        :param task_type:
+        :return:
+        """
+        bh = {'重大事务': "ZZ", '紧急事务': 'JJ', '专项事务': 'ZX', '常规事务': 'CC'}
+        today = datetime.datetime.now().date().strftime('%Y%m%d')
+        task_no = f"{bh[task_type]}{today}"
+        sql = "SELECT MAX(task_no) as max_task_no FROM oversee_task WHERE task_no LIKE '{}%'".format(task_no)
+        self.dict_cur.execute(sql)
+        row = self.dict_cur.fetchone()
+        if row['max_task_no']:
+            task_no = task_no + str(int(row['max_task_no'][-3:])+1).zfill(3)
+        else:
+            task_no = f'{task_no}001'
+        return task_no
 
     def update_oversee_task(self, task):
         """
