@@ -119,22 +119,57 @@ class ReleaseOverseeTaskView(Resource):
             task = dict(form.data)
             task_detail_list = task.pop("oversee_details")
             model = OverseeTaskModel()
+            oversee_messages = []
             try:
                 model.start_transaction()
                 file_ids = task.pop('file_ids')
                 oversee_task = model.get_data_by_id(self.__table__, task['id'])
                 count = model.execute_update(self.__table__, task, oversee_task)
+                now_time = datetime.datetime.now()
                 if count:
-                    self.update_log(self.__table__, task['id'], '修改督办任务：{}'.format(task['name']),
-                                    oversee_task, task)
+                    model.update_log(self.__table__, task['id'], '修改督办任务：{}'.format(task['name']),
+                                     oversee_task, task)
+
+                    if task['oversee_id'] == oversee_task['oversee_id']:
+                        oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
+                                                 "task_id": task['id'], "receive_id": task['oversee_id'],
+                                                 "title": "督办任务：{}发生变更，请尽快查看".format(task['name'])})
+                    else:
+                        oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
+                                                 "task_id": task['id'], "receive_id": task['oversee_id'],
+                                                 "title": "督办任务：{}待签收".format(task['name'])})
+                        oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
+                                                 "task_id": task['id'], "receive_id": oversee_task['oversee_id'],
+                                                 "title": "督办任务：{}已改由他人督办，请知晓".format(task['name'])})
+
                 model.reset_rel_task_file(task['id'], file_ids)
                 for index, update_data_detail in enumerate(task_detail_list):
+                    coordinator_ids = update_data_detail.pop("coordinator_ids")
                     task_detail = model.get_data_by_id('oversee_task_detail', update_data_detail['id'])
-                    count = model.execute_update('oversee_task_detail', update_data_detail, task_detail,
-                                                 extra_conditions=['status in ("待签收", "待提交")'])
+                    if task_detail['status'] not in ("待签收", "待提交"):
+                        continue
+                    count = model.execute_update('oversee_task_detail', update_data_detail, task_detail)
+                    model.reset_coordinator_ids(task['id'], task_detail['id'], coordinator_ids)
                     if count:
+
+                        if task_detail['agent_id'] == update_data_detail['agent_id']:
+                            oversee_messages.append({
+                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
+                                "title": "督办任务：{}->第{}阶段任务发生变更，请尽快查看".format(task['name'], index + 1)})
+                        else:
+                            oversee_messages.append({
+                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
+                                "title": "督办任务：{}->第{}阶段任务已改由他人经办，请知晓".format(task['name'], index + 1)})
+                            oversee_messages.append({
+                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "receive_id": update_data_detail['agent_id'], "task_detail_id": task_detail['id'],
+                                "title": "督办任务：{}->第{}阶段任务待签收".format(task['name'], index + 1)})
+
                         model.update_log('oversee_task_detail', task_detail['id'], '修改督办任务：{}子任务：{}'.format(
                             task['name'], index + 1), task_detail, update_data_detail)
+                    send_sys_message(oversee_messages)
                     model.conn.commit()
                     return json_response(message="修改成功")
             except Exception as e:
@@ -183,7 +218,7 @@ class SubmitOverseeTaskView(Resource):
         return True
 
     @admin_login_req
-    @allow_role_req([4])
+    # @allow_role_req([4])
     def post(self):
         """
         签收任务
@@ -203,7 +238,7 @@ class SubmitOverseeTaskView(Resource):
         return json_response(code=0, message="签收成功")
 
     @admin_login_req
-    @allow_role_req([4])
+    # @allow_role_req([4])
     def put(self):
         form = SubmitOverseeTaskForm().from_json(request.values.to_dict())
         if form.validate():
@@ -256,7 +291,7 @@ class AuditOverseeTaskView(Resource):
     __table_desc__ = '提交任务'
 
     @admin_login_req
-    @allow_role_req([2, 3])
+    # @allow_role_req([1, 2, 3])
     def post(self):
         """
         签收任务
@@ -269,13 +304,13 @@ class AuditOverseeTaskView(Resource):
         task = model.get_data_by_id('oversee_task', args['id'])
         if task['status'] != '待签收':
             return json_response(code=1, message="当前状态无法签收")
-        args['status'] = '待完成'
+        args['status'] = '进行中'
         model.execute_update('oversee_task', args)
         model.update_log('oversee_task', args['id'], "签收任务：%s" % task['name'], task, args)
         return json_response(code=0, message="签收成功")
 
     @admin_login_req
-    @allow_role_req([2, 3])
+    # @allow_role_req([1, 2, 3])
     def put(self):
         form = AuditOverseeTaskForm().from_json(request.json)
         if form.validate():

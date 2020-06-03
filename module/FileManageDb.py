@@ -67,7 +67,7 @@ class FileManageModel(BaseDb):
             sql += " AND DATE_FORMAT(file.add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
         result = self.query_paginate(sql, page=page, page_size=page_size)
         for res in result['list']:
-            res['url'] = parse.urljoin(MEDIA_PATH, res['file_path'])
+            res['url'] = parse.urljoin(MEDIA_PREFIX, res['file_path'])
             if res['size']/1024 < 1024:
                 res['size'] = str(round(res['size']/1024, 2))+'KB'
             else:
@@ -102,6 +102,20 @@ class FileManageModel(BaseDb):
             file_info['id'] = self.execute_insert(self.table_name, **file_info)
             file_info['url'] = parse.urljoin(MEDIA_PATH, file_info['file_path'])
         return file_info
+
+    def is_used_file(self, file_id):
+        """
+        文件是否在任务中使用
+        :param file_id:
+        :return:
+        """
+        sql = "SELECT COUNT(*) AS num FROM rel_task_file WHERE file_id=%s"
+        self.dict_cur.execute(sql, file_id)
+        row = self.dict_cur.fetchone()
+        if row['num']:
+            return True
+        else:
+            return False
 
 
 if __name__ == "__main__":

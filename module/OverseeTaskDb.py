@@ -275,7 +275,8 @@ class OverseeTaskModel(BaseDb):
         sql = """UPDATE oversee_task as task, 
             (SELECT task_id, CAST(IFNULL(SUM(IF(`status`='任务完成',1,0)), 0)/COUNT(*)*100 AS SIGNED) AS progress,
              MAX(audit_time) as completion_time  FROM oversee_task_detail WHERE task_id=%s GROUP BY task_id) as detail
-            SET task.progress=detail.progress, task.completion_time=IF(detail.progress=100,detail.completion_time,NULL)
+            SET task.progress=detail.progress, task.completion_time=IF(detail.progress=100, detail.completion_time, NULL),
+            task.status=IF(detail.progress=100, '任务完成', '进行中')
             WHERE detail.task_id=task.id AND task.id=%s
             """
         print(sql)
@@ -310,6 +311,23 @@ class OverseeTaskModel(BaseDb):
         if len(file_ids):
             sql = f"INSERT IGNORE INTO rel_task_file(task_id, file_id) VALUES({task_id}, %s)"
             self.dict_cur.executemany(sql, file_ids)
+
+    def reset_coordinator_ids(self, task_id, task_detail_id, coordinator_ids):
+        """
+        重置督办人
+        :param task_id:
+        :param task_detail_id:
+        :param coordinator_ids:
+        :return:
+        """
+        sql = f"DELETE FROM rel_task_coordinator WHERE task_id={task_id} AND task_detail_id={task_detail_id}"
+        if len(coordinator_ids):
+            sql += " AND coordinator_id NOT IN %s" % (str(tuple(coordinator_ids)).replace(",)", ")"))
+        self.dict_cur.execute(sql)
+        if len(coordinator_ids):
+            sql = f"INSERT IGNORE INTO rel_task_coordinator(task_id, task_detail_id, coordinator_id)" \
+                f" VALUES({task_id}, {task_detail_id}, %s)"
+            self.dict_cur.executemany(sql, coordinator_ids)
 
 
 if __name__ == "__main__":

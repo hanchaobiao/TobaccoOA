@@ -6,7 +6,7 @@
 # @Software: PyCharm
 import os
 import datetime
-import hashlib
+import mimetypes
 from copy import deepcopy
 
 import pymysql
@@ -212,35 +212,58 @@ class FileManageView(Resource):
         else:
             return json_response(code=1, message='文件不存在')
 
+    @admin_login_req
+    @allow_role_req([1])
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='文件id', required=True)
+        args = parser.parse_args()
+        model = FileManageModel()
+        file_info = model.get_data_by_id(self.__table__, args['id'])
+        if file_info:
+            flag = model.is_used_file(args['id'])
+            if flag is False:
+                model.execute_delete(self.__table__, ['id=%s' % args['id']])
+                model.delete_log(self.__table__, args['id'], "删除文件：{}".format(file_info['file_name']), file_info)
+                try:
+                    os.remove(os.path.join(MEDIA_PATH, file_info['file_path']))
+                except Exception as e:
+                    print(e)
+                return json_response(data=args)
+            else:
+                return json_response(code=1, message="文件已被督办事务使用，不能删除")
+        else:
+            return json_response(code=1, message='文件不存在')
+
 
 class DownloadFileView(Resource):
     """
     下载文件
     """
 
-    @staticmethod
     @admin_login_req
-    @allow_role_req([1, 2, 3, 4])
-    def post():
+    def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("id", type=int, help='文件id', required=True)
-        parser.add_argument("file_type", type=str, choices=['wish', 'oversee_submit', 'file_db'],
-                            help='文件id', required=True)
+        parser.add_argument("file_path", type=str, help='文件必填', required=True)
         args = parser.parse_args()
         try:
-            file_info = FileManageModel().get_file_by_id(args['id'])
-            if file_info:
-                path = os.path.join(MEDIA_PATH, file_info['file_path'])
-                with open(path, mode='rb') as f:
+            file_path = os.path.join(MEDIA_PATH, args['file_path'].strip("/"))
+            if os.path.exists(file_path):
+                with open(file_path, mode='rb') as f:
                     content = f.read()
-                response = make_response(content)
-                response.headers['Content-Type'] = file_info['format']
-                filename = file_info['file_name']+'.'+file_info['format']
-                response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename.encode().decode('latin-1'))
-                return response
+                rv = make_response(content)
+                filename = file_path.rsplit('/')[-1].rsplit("_")[-1]
+                mime_type = mimetypes.guess_type(filename)[0]
+                rv.headers['Content-Type'] = mime_type
+                rv.headers["Cache-Control"] = "no-cache"
+                rv.headers['Content-Disposition'] = 'attachment; filename={}'.format(
+                    filename.encode().decode('latin-1'))
+                return rv
             else:
                 return json_response(code=1, message='文件不存在')
         except Exception as err:
+            import traceback
+            traceback.print_exc()
             print('download_file error: {}'.format(str(err)))
             return json_response(code=1, message='下载异常')
 

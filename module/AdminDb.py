@@ -171,8 +171,10 @@ class AdminModel(BaseDb):
 
         sql = "SELECT sys_admin.real_name, sys_admin.position, log.* FROM sys_admin JOIN sys_admin_login_log as log " \
               "on sys_admin.id=log.admin_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
+        if admin['role_id'] not in [1, 6]:
+            sql += " AND admin_id={} ".format(admin['id'])
         if name and name.strip():
-            sql = sql + " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
+            sql += " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
         result = self.query_paginate(sql, start_time, end_time, sort=['log.add_time', sort_type],
                                      page=page, page_size=page_size)
         return result
@@ -188,11 +190,11 @@ class AdminModel(BaseDb):
         return self.dict_cur.fetchall()
         return result
 
-    def get_operate_log_list(self, admin, admin_id, operate_type, start_time, end_time, sort_type, page, page_size):
+    def get_operate_log_list(self, admin, name, operate_type, start_time, end_time, sort_type, page, page_size):
         """
         获取修改日志列表
         :param admin:
-        :param admin_id:
+        :param name:
         :param operate_type:
         :param start_time:
         :param end_time:
@@ -203,11 +205,12 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.real_name, log.* FROM sys_admin JOIN sys_admin_operate_log as log " \
               "on sys_admin.id=log.operator_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
-        if admin_id:
-            sql += " AND admin_id={} ".format(admin_id)
+        if admin['role_id'] not in [1, 6]:
+            sql += " AND admin_id={} ".format(admin['id'])
         if operate_type:
-            sql + " AND operate_type='{}'".format(escape_string(operate_type.strip()))
-
+            sql += " AND operate_type='{}'".format(escape_string(operate_type.strip()))
+        if name and name.strip():
+            sql += " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
         result = self.query_paginate(sql, start_time, end_time, sort=['log.add_time', sort_type],
                                      page=page, page_size=page_size)
         return result
@@ -285,6 +288,7 @@ class AdminModel(BaseDb):
             sql += " AND phone like '%{}%' ".format(phone)
         if start_date and end_date:
             sql += " AND DATE_FORMAT(add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
+        print(sql)
         result = self.query_paginate(sql, page=page, page_size=page_size)
         if len(result['list']) == 0:
             return result
@@ -356,16 +360,18 @@ class AdminModel(BaseDb):
         count = self.dict_cur.execute(sql, admin_id)
         return count
 
-    def get_my_message_list(self, admin, msg_type, page, page_size):
+    def get_my_message_list(self, admin, msg_type):
         """
         获取个人消息
         :return:
         """
-        sql = "SELECT * FROM sys_message WHERE receive_id={} AND receive_time IS NULL".format(admin['id'])
-        if msg_type:
-            sql += " AND `type`='{}'".format(msg_type)
-        result = self.query_paginate(sql, sort=['send_time', 'desc'], page=page, page_size=page_size)
-        return result
+        sql = "SELECT id, title, send_time, `type` FROM sys_message WHERE receive_id=%s AND receive_time IS NULL" \
+              " ORDER BY send_time DESC"
+        # if msg_type:
+        #     sql += " AND `type`='{}'".format(msg_type)
+        self.dict_cur.execute(sql, admin['id'])
+        rows = self.dict_cur.fetchall()
+        return {"count": len(rows), "list": rows}
 
 
 if __name__ == "__main__":

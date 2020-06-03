@@ -42,7 +42,7 @@ class AdminOperateLog(object):
         else:
             ip = request.remote_addr
         admin_id = request.user['id']
-        sql = "INSERT INTO sys_admin_operate_log(name, table_name, table_id, action_type, operator_id, ip, add_time)" \
+        sql = "INSERT INTO sys_admin_operate_log(name, table_name, table_id, operate_type, operator_id, ip, add_time)" \
               " VALUES(%s, %s, %s, %s, %s, %s, NOW())"
         self.dict_cur.execute(sql, (action_desc, table_name, table_id, method, admin_id, ip))
         insert_id = self.dict_cur.lastrowid

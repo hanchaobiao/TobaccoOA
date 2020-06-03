@@ -100,6 +100,13 @@ class EmployeeWishView(Resource):
             data['status'] = '待审核'
             data['employee_id'] = request.user['id']
             model = WishModel()
+
+            if 'X-Real-Ip' in request.headers:  # 通过代理后，仍能获取客户端真实ip,需在nginx/apache进行配置
+                ip = request.headers['X-Real-Ip']
+            else:
+                ip = request.remote_addr
+            data['ip'] = ip
+
             data['id'] = model.execute_insert(self.__table__, **data)
             result = upload_file('wish', wish_id=data['id'], file_type=1)
             if result['code'] == 1:
@@ -115,13 +122,13 @@ class EmployeeWishView(Resource):
         form = UpdateWishForm().from_json(request.values.to_dict())
         if form.validate():
             update_data = dict(form.data)
+            file_ids = [int(_id) for _id in update_data.pop("file_ids")]
             model = WishModel()
             wish = model.get_data_by_id(self.__table__, form.data['id'])
             if wish['employee_id'] != request.user['id']:
                 return json_response(code=1, message="该心愿无权操作")
             if wish['status'] != '待审核':
                 return json_response(code=1, message="该心愿已经审核，无法修改")
-            file_ids = update_data.pop("file_ids")
             model.execute_update(self.__table__, update_data, wish)
             result = upload_file('wish', wish_id=wish['id'], file_type=1)
             if result['code'] == 1:
