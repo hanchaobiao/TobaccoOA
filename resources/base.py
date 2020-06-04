@@ -215,7 +215,9 @@ class BaseDb(object):
         else:
             self.dict_cur.execute(count_sql)
         data = self.dict_cur.fetchone()
-        count = list(data.values())[0]
+        if data is None:
+            return {"count": 0, "list": []}
+        count = data['number']
         # 列表
         if args:
             self.dict_cur.execute(sql, args)

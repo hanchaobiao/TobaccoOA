@@ -305,13 +305,14 @@ class AdminModel(BaseDb):
         :param role_ids:
         :return:
         """
-        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin "
+        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin LEFT JOIN dict_department " \
+              "ON department_id=dict_department.id WHERE sys_admin.is_delete=0 "
         constraints = []
         if role_ids:
-            constraints.append(" role_id IN %s" % str(tuple(role_ids)).replace(",)", ")"))
+            sql += " AND role_id IN %s " % str(tuple(role_ids)).replace(",)", ")")
         if department_id:
-            constraints.append(f" department_id={department_id}")
-        sql = self.append_query_conditions(sql, constraints)
+            sql += " AND (dict_department.id={id} OR path like '{id},%' OR path like '%,{id},%' " \
+                   " OR path like '%,{id}')".format(id=department_id)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         return rows

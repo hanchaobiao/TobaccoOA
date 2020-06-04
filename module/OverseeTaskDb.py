@@ -37,7 +37,7 @@ class OverseeTaskModel(BaseDb):
         :param task_id:
         :return:
         """
-        sql = "SELECT progress FROM oversee_task WHERE id=%s"
+        sql = "SELECT progress, oversee_id FROM oversee_task WHERE id=%s"
         self.dict_cur.execute(sql, task_id)
         task = self.dict_cur.fetchone()
 
@@ -227,9 +227,10 @@ class OverseeTaskModel(BaseDb):
         :param task_id:
         :return:
         """
-        sql = "SELECT COUNT(*) AS num FROM oversee_task_detail WHERE task_id=%s AND status='任务完成'"
+        sql = "SELECT agent_id, status FROM oversee_task_detail WHERE task_id=%s AND status='任务完成'"
         self.dict_cur.execute(sql, task_id)
-        count = self.dict_cur.fetchone()['num']
+        rows = self.dict_cur.fetchall()
+        count = len([1 for row in rows if row['status'] == '任务完成'])
         if count > 0:
             return {"code": 1, "message": "任务已完成一部分，不能删除"}
         sql = "DELETE FROM rel_task_coordinator WHERE task_id=%s"
@@ -238,7 +239,9 @@ class OverseeTaskModel(BaseDb):
         self.dict_cur.execute(sql, task_id)
         sql = "DELETE FROM oversee_task WHERE id=%s"
         self.dict_cur.execute(sql, task_id)
-        return {"code": 0, "message": "删除成功"}
+        sql = "DELETE FROM rel_task_file WHERE task_id=%s"
+        self.dict_cur.execute(sql, task_id)
+        return {"code": 0, "message": "删除成功", "task_details": rows}
 
     def before_task_complete_situation(self, task_detail):
         """

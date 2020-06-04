@@ -74,7 +74,7 @@ class ReleaseOverseeTaskView(Resource):
             try:
                 model.start_transaction()
                 oversee_messages = []
-                file_ids = task.pop("file_ids")
+                file_ids = list(set(task.pop("file_ids")))
                 task['release_id'] = request.user['id']
                 task['task_no'] = model.generate_task_no(task['type'])
                 task['id'] = model.execute_insert(self.__table__, **task)
@@ -90,12 +90,12 @@ class ReleaseOverseeTaskView(Resource):
                         return json_response(code=1, message="下一任务的开始时间要大于等于前一任务的结束时间")
                     coordinator_ids = task_detail.pop("coordinator_ids")
                     task_detail = model.add_oversee_task_detail(task['id'], task_detail)
-                    oversee_messages.append({"type": "督办任务", "status": "待签收", "send_time": now_time,
+                    oversee_messages.append({"type": "经办任务", "status": "待签收", "send_time": now_time,
                                              "task_id": task['id'],
                                              "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
-                                             "title": "督办任务：{}->第{}阶段任务待签收".format(task['name'], index+1)})
+                                             "title": "经办任务：{}->第{}阶段任务待签收".format(task['name'], index+1)})
                     model.insert_log('oversee_task_detail', task_detail['id'],
-                                     '督办任务：{}子任务：{}'.format(task['name'], index+1), task_detail,
+                                     '经办任务：{}子任务：{}'.format(task['name'], index+1), task_detail,
                                      [{"name": "coordinator_ids", "desc": "协办人", "value": str(coordinator_ids)}])
                     for coordinator_id in coordinator_ids:
                         model.add_task_coordinator(task['id'], task_detail['id'], coordinator_id)
@@ -122,7 +122,7 @@ class ReleaseOverseeTaskView(Resource):
             oversee_messages = []
             try:
                 model.start_transaction()
-                file_ids = task.pop('file_ids')
+                file_ids = list(set(task.pop("file_ids")))
                 oversee_task = model.get_data_by_id(self.__table__, task['id'])
                 count = model.execute_update(self.__table__, task, oversee_task)
                 now_time = datetime.datetime.now()
@@ -154,20 +154,20 @@ class ReleaseOverseeTaskView(Resource):
 
                         if task_detail['agent_id'] == update_data_detail['agent_id']:
                             oversee_messages.append({
-                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "type": "经办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
                                 "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
-                                "title": "督办任务：{}->第{}阶段任务发生变更，请尽快查看".format(task['name'], index + 1)})
+                                "title": "经办任务：{}->第{}阶段任务发生变更，请尽快查看".format(task['name'], index + 1)})
                         else:
                             oversee_messages.append({
-                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "type": "经办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
                                 "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
-                                "title": "督办任务：{}->第{}阶段任务已改由他人经办，请知晓".format(task['name'], index + 1)})
+                                "title": "经办任务：{}->第{}阶段任务已改由他人经办，请知晓".format(task['name'], index + 1)})
                             oversee_messages.append({
-                                "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                                "type": "经办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
                                 "receive_id": update_data_detail['agent_id'], "task_detail_id": task_detail['id'],
-                                "title": "督办任务：{}->第{}阶段任务待签收".format(task['name'], index + 1)})
+                                "title": "经办任务：{}->第{}阶段任务待签收".format(task['name'], index + 1)})
 
-                        model.update_log('oversee_task_detail', task_detail['id'], '修改督办任务：{}子任务：{}'.format(
+                        model.update_log('oversee_task_detail', task_detail['id'], '修改经办任务：{}子任务：{}'.format(
                             task['name'], index + 1), task_detail, update_data_detail)
                     send_sys_message(oversee_messages)
                     model.conn.commit()
@@ -189,11 +189,24 @@ class ReleaseOverseeTaskView(Resource):
         args = parser.parse_args()
         model = OverseeTaskModel()
         try:
+            oversee_messages = []
             task = model.get_data_by_id(self.__table__, args['id'])
+            now_time = datetime.datetime.now()
             if task:
                 model.start_transaction()
                 result = model.delete_task(args['id'])
-                model.delete_log(self.__table__, args['id'], "删除任务：{}".format(task['name']), task)
+                if result['code'] == 0:
+                    oversee_messages.append({
+                        "type": "督办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                        "receive_id": task['oversee_id'], "task_detail_id": None,
+                        "title": "督办任务：{}->已取消，请知晓".format(task['name'])})
+                    for task_detail in result.pop("task_details"):
+                        oversee_messages.append({
+                            "type": "经办任务", "status": "待签收", "send_time": now_time, "task_id": task['id'],
+                            "receive_id": task_detail['agent_id'], "task_detail_id": task_detail['id'],
+                            "title": "经办任务：{}->已取消，请知晓".format(task['name'])})
+                    send_sys_message(oversee_messages)
+                    model.delete_log(self.__table__, args['id'], "删除任务：{}".format(task['name']), task)
                 model.conn.commit()
                 return json_response(**result)
             else:
@@ -331,13 +344,13 @@ class AuditOverseeTaskView(Resource):
                                              {"audit_time": datetime.datetime.now()},
                                              extra_conditions=['status!="%s"' % update_data['status']])
                 if count:
-                    message = '督办人：{}提交任务:{}->子任务：{}'.format(request.user['real_name'], task_detail['name'],
-                                                             situation['index'])
+                    message = '督办人：{}审核任务:{}->子任务：{}'.format(request.user['real_name'], task_detail['name'],
+                                                                  situation['index'])
                     oversee_messages = [
-                        {"type": "督办任务", "status": update_data['status'], "send_time": datetime.datetime.now(),
+                        {"type": "经办任务", "status": update_data['status'], "send_time": datetime.datetime.now(),
                          "task_id": task_detail['task_id'], "task_detail_id": task_detail['id'],
                          "receive_id": task_detail['agent_id'],
-                         "title": "督办任务：{}->第{}阶段任务{}".format(task_detail['name'], situation['index'],
+                         "title": "经办任务：{}->第{}阶段任务{}".format(task_detail['name'], situation['index'],
                                                               update_data['status'])}]
                     print(model.get_data_by_id('oversee_task_detail', task_detail['id']))
                     model.update_task_progress(task_detail['task_id'])
