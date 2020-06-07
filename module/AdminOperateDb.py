@@ -47,8 +47,8 @@ class AdminOperateModel(BaseDb):
         :return:
         """
         sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin " \
-              "JOIN sys_admin_role ON role_id=sys_admin_role.id WHERE role_id IN (1, 2, 3) " \
-              "AND sys_admin_role.level<%s OR sys_admin.id=%s"
+              "JOIN sys_admin_role ON role_id=sys_admin_role.id WHERE role_id IN (2, 3) " \
+              "AND sys_admin_role.level<=%s OR sys_admin.id=%s"
         self.dict_cur.execute(sql, (admin['role_level'], admin['id']))
         rows = self.dict_cur.fetchall()
         return rows

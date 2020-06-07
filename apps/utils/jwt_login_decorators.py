@@ -42,10 +42,10 @@ def admin_login_req(method):
                 return method(*args, **kwargs)
             except jwt.ExpiredSignatureError as e:  # 签名过期
                 print(e)
-                return json_response(code=402, message="签名过期")
+                return json_response(code=402, message="签名过期，请重新登陆")
             except jwt.InvalidSignatureError as e:
                 print(e)
-                return json_response(code=402, message="签名错误")
+                return json_response(code=402, message="签名错误，请重新登陆")
         else:
             return json_response(code=402, message="请登录")
     return wrapper

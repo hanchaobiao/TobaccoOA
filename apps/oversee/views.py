@@ -345,14 +345,13 @@ class AuditOverseeTaskView(Resource):
                                              extra_conditions=['status!="%s"' % update_data['status']])
                 if count:
                     message = '督办人：{}审核任务:{}->子任务：{}'.format(request.user['real_name'], task_detail['name'],
-                                                                  situation['index'])
+                                                             situation['index'])
                     oversee_messages = [
                         {"type": "经办任务", "status": update_data['status'], "send_time": datetime.datetime.now(),
                          "task_id": task_detail['task_id'], "task_detail_id": task_detail['id'],
                          "receive_id": task_detail['agent_id'],
-                         "title": "经办任务：{}->第{}阶段任务{}".format(task_detail['name'], situation['index'],
+                         "title": "经办任务：{}->第{}阶段任务审核结果：{}".format(task_detail['name'], situation['index'],
                                                               update_data['status'])}]
-                    print(model.get_data_by_id('oversee_task_detail', task_detail['id']))
                     model.update_task_progress(task_detail['task_id'])
                     send_sys_message(oversee_messages)
                     model.update_log(self.__table__, update_data['id'], message, task_detail, update_data)

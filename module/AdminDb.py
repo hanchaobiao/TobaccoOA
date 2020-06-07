@@ -171,7 +171,7 @@ class AdminModel(BaseDb):
 
         sql = "SELECT sys_admin.real_name, sys_admin.position, log.* FROM sys_admin JOIN sys_admin_login_log as log " \
               "on sys_admin.id=log.admin_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
-        if admin['role_id'] not in [1, 6]:
+        if admin['role_id'] != 1:
             sql += " AND admin_id={} ".format(admin['id'])
         if name and name.strip():
             sql += " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
@@ -205,7 +205,7 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.real_name, log.* FROM sys_admin JOIN sys_admin_operate_log as log " \
               "on sys_admin.id=log.operator_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
-        if admin['role_id'] not in [1, 6]:
+        if admin['role_id'] != 1:
             sql += " AND admin_id={} ".format(admin['id'])
         if operate_type:
             sql += " AND operate_type='{}'".format(escape_string(operate_type.strip()))

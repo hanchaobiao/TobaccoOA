@@ -253,7 +253,6 @@ class BaseDb(object):
         sql = "UPDATE {} SET {} WHERE id={}".format(table_name, update, update_data['id'])
         if len(extra_conditions) > 0:
             sql += " AND " + " AND ".join(extra_conditions)
-        print(sql)
         count = self.dict_cur.execute(sql)
         return count
 

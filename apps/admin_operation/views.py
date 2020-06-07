@@ -53,9 +53,15 @@ class AdminSelectView(Resource):
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=str, help='类型', required=False, default=None)
-        parser.add_argument("type", type=str, help='角色类型', choices=['oversee', 'agent'], required=True)
+        parser.add_argument("type", type=str, help='角色类型', choices=['oversee', 'agent', 'coordinator'], required=True)
         args = parser.parse_args()
-        role_ids = [1, 2, 3] if args['type'] == 'oversee' else [4]
+
+        if args['type'] == 'oversee':
+            role_ids = [1, 2, 3]
+        elif args['type'] == 'agent':
+            role_ids = [1, 4, 6]
+        else:
+            role_ids = [5]
         result = AdminModel().get_admin_by_department_role(args['department_id'], role_ids)
         return json_response(code=0, data=result)
 
@@ -319,13 +325,13 @@ class MemoEventView(Resource):
         parser.add_argument("id", type=int, help='id', required=True)
         args = parser.parse_args()
         model = AdminModel()
-        memo = model.execute_delete(self.__table__, [f'id={args["id"]}', 'admin_id={}'.format(request.user['id'])])
+        memo = model.get_data_by_id(self.__table__, args['id'])
         if memo is None:
             return json_response(code=1, message="无此备忘记录")
         if memo['admin_id'] != request.user['id']:
             return json_response(code=1, message="无权限操作此备忘录")
-        model.execute_update(self.__table__, args, memo)
-        return json_response(code=0, message="修改成功")
+        model.execute_delete(self.__table__, [f'id={args["id"]}', 'admin_id={}'.format(request.user['id'])])
+        return json_response(code=0, message="删除成功")
 
 
 class ScheduleView(Resource):
@@ -408,12 +414,12 @@ class ScheduleView(Resource):
         model = AdminOperateModel()
         schedule = model.get_data_by_id(self.__table__, args['id'])
         if schedule is None:
-            return json_response(code=1, message="无此日程记录")
+            return json_response(code=1, message="无此行程记录")
         admin = request.user
         if admin['role_id'] in [1, 2] and request.user['id'] != schedule['arranged_id']:
             return json_response(code=1, message="无权删除此人安排行程")
         model.execute_delete(self.__table__, [f'id={args["id"]}', 'arranged_id={}'.format(admin['id'])])
-        model.delete_log(self.__table__, schedule['id'], desc="删除行程：{}".format(schedule['title']))
+        model.delete_log(self.__table__, schedule['id'], "删除行程：{}".format(schedule['title']), schedule)
         if admin['id'] != schedule['arranged_id']:
             send_sys_message([{"type": "行程", "status": "待签收", "send_time": datetime.datetime.now(),
                                "receive_id": schedule['arranged_id'],
