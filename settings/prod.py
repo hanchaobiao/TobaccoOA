@@ -13,13 +13,12 @@ LOGGER_LEVEL = "INFO"
 
 
 MYSQL = {
-    "db": "tobacco",
+    "db": "tobacco_office",
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "passwd": "bjmrkj_2019",
+    "passwd": "hbuasxyl_2019",
 }
-
 
 REDIS = {
         "host": "127.0.0.1",

@@ -62,7 +62,7 @@ class LogoutView(Resource):
         :return:
         """
         RedisPool().set_offline_status(request.user['id'])
-        return json_response(message='退出成功')
+        return json_response(code=0, message='退出成功')
 
 
 class AdminRoleView(Resource):
