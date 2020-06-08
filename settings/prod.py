@@ -24,7 +24,7 @@ REDIS = {
         "host": "127.0.0.1",
         "port": "6379",
         "db": 1,
-        "password": "bjmrkj_2019"
+        "password": "hbuasxyl_2019"
 }
 
 

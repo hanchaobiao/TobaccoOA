@@ -86,8 +86,9 @@ class OverseeTaskModel(BaseDb):
         :return:
         """
         sql = """
-        SELECT oversee_task.*, GROUP_CONCAT(oversee_task_detail.agent_id) as agent_ids, 
-            GROUP_CONCAT(rel_task_coordinator.coordinator_id ) as coordinator_ids 
+        SELECT oversee_task.*, 
+          GROUP_CONCAT(DISTINCT oversee_task_detail.agent_id order by oversee_task_detail.id) as agent_ids, 
+          GROUP_CONCAT(DISTINCT rel_task_coordinator.coordinator_id order by oversee_task_detail.id) as coordinator_ids 
         FROM oversee_task LEFT JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id
         LEFT JOIN rel_task_coordinator ON oversee_task_detail.id=rel_task_coordinator.task_detail_id
         """
@@ -116,12 +117,12 @@ class OverseeTaskModel(BaseDb):
             if len(task_ids) == 0:
                 return result
             task_ids = str(tuple(task_ids)).replace(",)", ")")
-            sql = "SELECT task_id, GROUP_CONCAT(agent_id) AS agent_ids FROM " \
+            sql = "SELECT task_id, GROUP_CONCAT(DISTINCT agent_id) AS agent_ids FROM " \
                   "oversee_task_detail WHERE task_id IN %s GROUP BY task_id" % task_ids
             self.dict_cur.execute(sql)
             rows = self.dict_cur.fetchall()
             agent_dict = {row['task_id']: row['agent_ids'] for row in rows}
-            sql = "SELECT task_id, GROUP_CONCAT(coordinator_id) AS coordinator_ids FROM " \
+            sql = "SELECT task_id, GROUP_CONCAT(DISTINCT coordinator_id) AS coordinator_ids FROM " \
                   "rel_task_coordinator WHERE task_id IN %s GROUP BY task_id" % task_ids
             self.dict_cur.execute(sql)
             rows = self.dict_cur.fetchall()
@@ -157,11 +158,12 @@ class OverseeTaskModel(BaseDb):
             res['oversee_name'] = people_dict.get(res['oversee_id'])
             res['release_name'] = people_dict.get(res['release_id'])
             if res['agent_ids']:
-                for agent_id in list(set(res['agent_ids'].split(","))):
+                for agent_id in res['agent_ids'].split(","):
                     res['agents'].append({"id": int(agent_id), "name": people_dict.get(int(agent_id))})
             if res['coordinator_ids']:
-                for coordinator_id in list(set(res['coordinator_ids'].split(","))):
-                    res['coordinators'].append({"id": int(coordinator_id), "name": people_dict.get(int(coordinator_id))})
+                for coordinator_id in res['coordinator_ids'].split(","):
+                    res['coordinators'].append({"id": int(coordinator_id),
+                                                "name": people_dict.get(int(coordinator_id))})
         return data_list
 
     def generate_task_no(self, task_type):

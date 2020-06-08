@@ -206,7 +206,7 @@ class AdminModel(BaseDb):
         sql = "SELECT sys_admin.real_name, log.* FROM sys_admin JOIN sys_admin_operate_log as log " \
               "on sys_admin.id=log.operator_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
         if admin['role_id'] != 1:
-            sql += " AND admin_id={} ".format(admin['id'])
+            sql += " AND operator_id={} ".format(admin['id'])
         if operate_type:
             sql += " AND operate_type='{}'".format(escape_string(operate_type.strip()))
         if name and name.strip():
@@ -288,11 +288,9 @@ class AdminModel(BaseDb):
             sql += " AND phone like '%{}%' ".format(phone)
         if start_date and end_date:
             sql += " AND DATE_FORMAT(add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
-        print(sql)
         result = self.query_paginate(sql, page=page, page_size=page_size)
         if len(result['list']) == 0:
             return result
-
         redis = RedisPool()
         for user in result['list']:
             user['is_online'] = redis.check_online_status(user['id'])

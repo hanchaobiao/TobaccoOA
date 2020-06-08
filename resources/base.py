@@ -203,7 +203,10 @@ class BaseDb(object):
         count_sql = sql.replace(result[0][1], ' COUNT(*) as number ')
 
         if sort:
-            sql += " ORDER BY {} {} ".format(sort[0], sort[1])
+            if isinstance(sort[0], tuple):
+                sql += " ORDER BY " + ','.join([" {} {} ".format(item[0], item[1]) for item in sort])
+            else:
+                sql += " ORDER BY {} {} ".format(sort[0], sort[1])
         sql = sql.strip(",")
         if page is not None:
             page = 0 if int(page) < 1 else int(page) - 1

@@ -56,12 +56,13 @@ class WishModel(BaseDb):
         """
         conditions = []
         if admin['role_id'] not in [1, 2, 3]:
-            conditions.append( "(employee_wish.agent_id={admin_id} OR employee_wish.employee_id={admin_id})".
-                               format(admin_id=admin['id']))
+            conditions.append("(employee_wish.agent_id={admin_id} OR employee_wish.employee_id={admin_id})".format(
+                admin_id=admin['id']))
         if name:
             conditions.append("employee_wish.name like '%{}%'".format(name))
         if status:
-            conditions.append("status.status='{}'".format(status))
+            conditions.append("employee_wish.status='{}'".format(status))
+        sql = self.append_query_conditions(sql, conditions)
         result = self.query_paginate(sql, sort=['employee_wish.add_time', 'desc'], page=page, page_size=page_size)
         return result
 
