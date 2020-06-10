@@ -37,11 +37,12 @@ class WishModel(BaseDb):
 
         return wish
 
-    def get_employee_wish_list(self, admin, name, status, page, page_size):
+    def get_employee_wish_list(self, admin, name, belong_type, status, page, page_size):
         """
         心愿列表
         :param admin:
         :param name:
+        :param belong_type:
         :param status:
         :param page:
         :param page_size:
@@ -62,6 +63,10 @@ class WishModel(BaseDb):
             conditions.append("employee_wish.name like '%{}%'".format(name))
         if status:
             conditions.append("employee_wish.status='{}'".format(status))
+        if belong_type == 'AGENT':
+            conditions.append("employee_wish.agent_id={}".format(admin['id']))
+        elif belong_type == 'RELEASE':
+            conditions.append("employee_wish.employee_id={}".format(admin['id']))
         sql = self.append_query_conditions(sql, conditions)
         result = self.query_paginate(sql, sort=['employee_wish.add_time', 'desc'], page=page, page_size=page_size)
         return result

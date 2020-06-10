@@ -78,6 +78,8 @@ class EmployeeWishView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='心愿id', required=False, default=None)
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
+        parser.add_argument('type', type=str, help='类型', choices=['ALL', 'AGENT', 'RELEASE'],
+                            required=False, default='ALL')
         parser.add_argument("status", type=str, help='执行状态', choices=['', '待审核', '驳回', '待签收', '待提交', '心愿完成'],
                             required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
@@ -87,7 +89,7 @@ class EmployeeWishView(Resource):
         if args['id']:
             result = model.get_employee_wish_detail(request.user, args['id'])
         else:
-            result = model.get_employee_wish_list(request.user, args['name'], args['status'],
+            result = model.get_employee_wish_list(request.user, args['name'], args['type'], args['status'],
                                                   args['page'], args['page_size'])
         return json_response(data=result)
 
