@@ -232,3 +232,31 @@ class SubmitWishView(Resource):
         else:
             return json_response(code=1, errors=form.errors)
 
+
+class DpWishGiveLikeView(Resource):
+    """
+    大屏心愿点赞
+    """
+
+    __table__ = 'employee_wish'  # 操作表
+
+    @admin_login_req
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=str, help='心愿id', required=False, default=None)
+        args = parser.parse_args()
+        model = WishModel()
+        wish = model.get_data_by_id(self.__table__, args['id'])
+        if wish is None:
+            return json_response(code=1, message='心愿不存在')
+        if wish['status'] == '心愿完成':
+            return json_response(code=1, message='心愿未完成，不能点赞')
+        count = model.execute_update(self.__table__, args['id'], {"give_like_num": wish['give_like_num']+1}, wish,
+                                     extra_conditions={"give_like_num": wish['give_like_num']})
+        if count:
+            model.execute_insert('employee_wish_give_like_record', wish_id=args['id'], operator_id=request.user['id'],
+                                 add_time=datetime.datetime.now())
+            return json_response(message="点赞成功")
+        else:
+            return json_response(message="点赞人数过多，请重试")
+

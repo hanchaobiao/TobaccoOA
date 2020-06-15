@@ -34,8 +34,8 @@ class ReleaseOverseeTaskView(Resource):
     __table_desc__ = '督办任务'
 
     @staticmethod
-    @admin_login_req
-    @allow_role_req([1, 2, 3, 4])
+    # @admin_login_req
+    # @allow_role_req([1, 2, 3, 4])
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help='任务名称', required=False, default=None)
@@ -46,6 +46,7 @@ class ReleaseOverseeTaskView(Resource):
                             required=False, default=None)
         parser.add_argument("relation", type=str, help='任务关系', choices=['', '由我发布', '由我经办', '由我督办', '由我协办'],
                             required=False, default=None)
+        parser.add_argument("department_id", type=int, help='经办部门，从大屏进入', required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
         parser.add_argument("page_size", type=int, help='页数', required=False, default=20)
         args = parser.parse_args()
@@ -53,8 +54,9 @@ class ReleaseOverseeTaskView(Resource):
         if args.get("id"):
             result = model.get_oversee_task_detail(args['id'])
         else:
+            request.user = {"role_id": 5}
             result = model.get_oversee_task_list(request.user, args['name'], args['type'], args['relation'],
-                                                 args['page'], args['page_size'])
+                                                 args['department_id'], args['page'], args['page_size'])
             if len(result['list']):
                 ids = model.get_all_people_ids(result['list'])
                 admin_list = AdminModel().get_admin_by_ids(ids)

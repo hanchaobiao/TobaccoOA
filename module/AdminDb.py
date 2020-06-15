@@ -275,7 +275,7 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, status, " \
               "sys_admin.add_time, department_id, dict_department.name as department, dict_department.leader_id, " \
-              "dict_department.level, role_id, sys_admin_role.role_name " \
+              "dict_department.level, role_id, sys_admin_role.role_name, sys_admin.sort_index  " \
               "FROM sys_admin LEFT JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
               "LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
               "WHERE sys_admin.is_delete=0 "
@@ -288,7 +288,8 @@ class AdminModel(BaseDb):
             sql += " AND phone like '%{}%' ".format(phone)
         if start_date and end_date:
             sql += " AND DATE_FORMAT(add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
-        result = self.query_paginate(sql, page=page, page_size=page_size)
+        result = self.query_paginate(sql, sort=[('sys_admin_role.sort_index', 'asc'), ('sys_admin.sort_index', 'asc')],
+                                     page=page, page_size=page_size)
         if len(result['list']) == 0:
             return result
         redis = RedisPool()

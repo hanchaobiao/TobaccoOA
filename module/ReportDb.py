@@ -155,6 +155,40 @@ class ReportModel(BaseDb):
             data_list.append({"name": name, "data": data})
         return {"x_axis": axis, "y_axis": data_list}
 
+    def oversee_type_complete_situation(self, department_id):
+        """
+        事务分类完成情况
+        :param department_id:
+        :return:
+        """
+        sql = """
+        SELECT type, status, COUNT(*) AS number FROM (
+            SELECT `type`,
+                CASE WHEN group_concat(DISTINCT d.status)='任务完成' then 'complete_num'
+                WHEN group_concat(DISTINCT d.status) != '任务完成' AND max(end_time)<NOW() THEN 'ongoing_num'
+                ELSE 'ongoing_num' END  as status
+            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {}
+            GROUP BY oversee_task.id, `type`, d.status
+        ) AS tmp GROUP BY `type`, status
+        """
+
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" WHERE d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        else:
+            sql = sql.format('')
+        self.dict_cur.execute(sql)
+        rows = list(self.dict_cur.fetchall())
+        oversee_type_dict = {"专项事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0},
+                             "重大事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0},
+                             "紧急事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0},
+                             "常规事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0}}
+        for row in rows:
+            oversee_type_dict[row['type']][row['status']] = row['number']
+            oversee_type_dict[row['type']][row['status']] += row['number']
+        return oversee_type_dict
+
     def get_newest_tax(self):
         """
         完成税率
@@ -165,63 +199,153 @@ class ReportModel(BaseDb):
         rows = self.dict_cur.fetchall()
         return rows
 
-    def department_oversee_task_complete_num_sort(self, department_id=2):
+    def department_oversee_task_complete_num_sort(self, department_id=2, date=None):
         """
         部门完成数排名
         :return:
         """
-        # sql = """
-        # SELECT department_id, dict_department.name, `type`, status, COUNT(1) as num FROM (
-        #     SELECT oversee_task.id, d.department_id, `type`,
-        #         CASE WHEN group_concat(DISTINCT d.status)='任务完成' then '已完成'
-        #         WHEN group_concat(DISTINCT d.status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
-        #         ELSE '进行中' END  as status
-        #     FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {}
-        #     GROUP BY oversee_task.id, d.department_id, `type`, d.status HAVING group_concat(DISTINCT d.status)='任务完成'
-        # ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id
-        # GROUP BY department_id, dict_department.name, `type`, status
-        # """
-        sql = """
-              SELECT department_id as id, dict_department.name, `type`, 
-                COUNT(task_num) as task_num, COUNT(complete_num) as complete_num FROM (
-                  SELECT oversee_task.id, d.department_id, `type`, 
-                    1 AS task_num, IF(group_concat(DISTINCT d.status)='任务完成', 1, NULL) as complete_num
-                    FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {} 
-                    GROUP BY oversee_task.id, d.department_id, `type`
-                ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id GROUP BY department_id, dict_department.name, `type`
-                """
+        internal_sql = """
+            SELECT oversee_task.id, d.department_id, `type`, 
+            1 AS task_num, IF(group_concat(DISTINCT d.status)='任务完成', 1, NULL) as complete_num
+            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id
+        """
+        conditions = []
         if department_id:
             child_dict = DepartmentModel().get_child_department_by_ids(department_id)
             if child_dict:
-                sql = sql.format(" WHERE d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
-        else:
-            sql = sql.format('')
+                conditions.append("d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        if date:
+            conditions.append("DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(date))
+        internal_sql = self.append_query_conditions(internal_sql, conditions)
+        sql = """
+              SELECT department_id as id, dict_department.name, `type`, 
+                COUNT(task_num) as task_num, COUNT(complete_num) as complete_num, 
+                COUNT(complete_num)/COUNT(task_num) as complete_rate FROM (
+                    {}
+                    GROUP BY oversee_task.id, d.department_id, `type`
+                ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id GROUP BY department_id, dict_department.name, `type`
+                """.format(internal_sql)
         self.dict_cur.execute(sql)
         rows = list(self.dict_cur.fetchall())
-        oversee_type_dict = {"专项事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
-                             "重大事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
-                             "紧急事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []},
-                             "常规事务": {"total": {"task_num": 0, "complete_num": 0}, "list": []}}
+        oversee_type_dict = {"专项事务": {"total": {"task_num": 0, "complete_num": 0, "complete_rate": 0}, "list": []},
+                             "重大事务": {"total": {"task_num": 0, "complete_num": 0, "complete_rate": 0}, "list": []},
+                             "紧急事务": {"total": {"task_num": 0, "complete_num": 0, "complete_rate": 0}, "list": []},
+                             "常规事务": {"total": {"task_num": 0, "complete_num": 0, "complete_rate": 0}, "list": []}}
         for row in rows:
             oversee_type_dict[row['type']]['list'].append(row)
             oversee_type_dict[row['type']]['total']['task_num'] += row['task_num']
             oversee_type_dict[row['type']]['total']['complete_num'] += row['complete_num']
         for task_type, data in oversee_type_dict.items():
+            data['total']['complete_rate'] = round(data['total']['complete_num'] / data['total']['task_num'], 4)\
+                if data['total']['task_num'] else 0
             ids = [row['id'] for row in data['list']]
             diff_ids = list(set(child_dict.keys()).difference(set(ids)))
             for department_id in diff_ids:
                 child_dict[department_id]['complete_num'] = 0
                 child_dict[department_id]['task_num'] = 0
+                child_dict[department_id]['complete_rate'] = 0
                 data['list'].append(child_dict[department_id])
             rows.sort(key=lambda x: (x['complete_num'], x['complete_num']/(x['task_num'] or 1), -x['id']), reverse=True)
         return oversee_type_dict
 
+    def unfinished_task_list(self, department_id=2):
+        """
+        未完成任务列表
+        :param department_id:
+        :return:
+        """
+        sql = """
+        SELECT task_no, name, oversee_task.type, oversee_task_detail.department_id as agent_department_id,
+          oversee_id, agent_id, DATE_FORMAT(start_time, '%Y-%m-%d') as start_time, 
+          DATE_FORMAT(end_time, '%Y-%m-%d') as end_time  FROM oversee_task JOIN (
+            SELECT task_id, agent_id, department_id, start_time, end_time FROM oversee_task_detail WHERE id in (
+                SELECT min(id) as id FROM oversee_task_detail WHERE status != '任务完成' {} GROUP BY task_id
+            )
+        ) AS oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id 
+        """
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        else:
+            sql = sql.format('')
+            child_dict = DepartmentModel().get_child_department_by_ids(None)
+        print(sql)
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        if len(rows) == 0:
+            return []
+        user_ids = set()
+        for row in rows:
+            user_ids.add(row['agent_id'])
+            user_ids.add(row['oversee_id'])
+        sql = "SELECT id, real_name FROM sys_admin WHERE id in %s" % str(tuple(user_ids)).replace(",)", ")")
+        self.dict_cur.execute(sql)
+        user_list = self.dict_cur.fetchall()
+        user_dict = {row['id']: row['real_name'] for row in user_list}
+        for row in rows:
+            row['agent_department_name'] = child_dict[row['agent_department_id']]
+            row['agent_name'] = user_dict[row['agent_id']]
+            row['oversee_name'] = user_dict[row['oversee_id']]
+        return rows
+
+    def year_important_task(self, department_id, year, year_month):
+        """
+        年度重点事务
+        :return:
+        """
+        sql = "SELECT oversee_task.name, DATE_FORMAT(oversee_task.add_time, '%Y-%m-%d') as date, " \
+              "real_name as oversee_name, dict_department.name as department_name " \
+              "FROM oversee_task JOIN sys_admin ON oversee_id=sys_admin.id " \
+              "JOIN dict_department ON department_id=dict_department.id " \
+              "WHERE oversee_task.`type`='重大事务' "
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            if child_dict:
+                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        else:
+            sql = sql.format('')
+
+        if year:
+            sql += " DATE_FORMAT(oversee_task.add_time, '%Y')='{}'".format(year)
+        elif year_month:
+            sql += " DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(year_month)
+        sql += " ORDER BY oversee_task.add_time desc "
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        return rows
+
+    def completed_wish_list(self):
+        """
+        已完成心愿，回复心愿列表
+        :return:
+        """
+        sql = "SELECT id, name, submit_content  FROM employee_wish WHERE status='心愿完成' order by submit_time desc"
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        return rows
+
+    def get_wish_list(self):
+        """
+        全部心愿列表
+        :return:
+        """
+        sql = "SELECT id, name, wish_content, status, submit_content, submit_time, give_like_num, " \
+              "DATEDIFF(submit_time, add_time) as cost_day FROM employee_wish " \
+              "order by give_like_num desc, add_time desc"
+        self.dict_cur.execute(sql)
+        rows = self.dict_cur.fetchall()
+        return {"count": len(rows), "list": rows}
+
 
 if __name__ == "__main__":
     am = ReportModel()
-    print(am.get_employee_status(2))
-    print(am.get_leader_statistics(2))
-    print(am.oversee_task_statistics(3))
-    print(am.get_newest_tax())
-    print(am.oversee_task_trend(None))
-    print(am.department_oversee_task_complete_num_sort())
+    # print(am.get_employee_status(2))
+    # print(am.get_leader_statistics(2))
+    # print(am.oversee_task_statistics(3))
+    # print(am.get_newest_tax())
+    # print(am.oversee_task_trend(None))
+    # print(am.department_oversee_task_complete_num_sort(date='2020-06'))
+    # print(am.oversee_type_complete_situation(None))
+    # print(am.year_important_task(''))
+    print(am.unfinished_task_list())

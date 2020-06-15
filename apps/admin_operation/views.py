@@ -14,7 +14,7 @@ from flask import request, make_response
 from flask_restful import Resource, reqparse
 from apps import MEDIA_PATH
 from apps.admin_operation.forms import AddDepartmentForm, UpdateDepartmentForm, AddMemoEventForm, UpdateMemoEventForm,\
-    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm
+    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm, AddDepartmentNoticeForm, UpdateDepartmentNoticeForm
 from module.AdminDb import AdminModel
 from module.AdminOperateDb import AdminOperateModel
 from module.DepartmentDb import DepartmentModel
@@ -454,3 +454,67 @@ class TaxProgressView(Resource):
             return json_response(data=tax)
         else:
             return json_response(code=1, errors=form.errors)
+
+
+class DepartmentNoticeView(Resource):
+    """
+    部门通知
+    """
+
+    __table__ = 'department_notice'
+
+    # @admin_login_req
+    # @allow_role_req(role_ids=[4])
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=int, help='部门id', required=False)
+        parser.add_argument("title", type=str, help='标题', required=False)
+        parser.add_argument("page", type=int, help='页码', required=False, default=1)
+        parser.add_argument("page_size", type=int, help='每页数量', required=False, default=10)
+        args = parser.parse_args()
+        # args['department_id'] = request.user['department_id']
+        tax = DepartmentModel().get_department_notice_list(args['department_id'], args['title'],
+                                                           args['page'], args['page_size'])
+        return json_response(data=tax)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def post(self):
+        form = AddDepartmentNoticeForm().from_json(request.json)
+        if form.validate():
+            model = DepartmentModel()
+            data = dict(form.data)
+            data['operator_id'] = request.user['id']
+            data['department_id'] = request.user['department_id']
+            data['add_time'] = datetime.datetime.now()
+            notice = model.execute_insert(self.__table__, **data)
+            return json_response(data=notice)
+        else:
+            return json_response(code=1, errors=form.errors)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def put(self):
+        form = UpdateDepartmentNoticeForm().from_json(request.json)
+        if form.validate():
+            model = DepartmentModel()
+            notice = model.get_data_by_id(self.__table__, form.data['id'])
+            if notice['department_id'] != request.user['department_id']:
+                return json_response(code=1, message="不能操作其他部门公告")
+            model.execute_update(self.__table__, form.data, notice)
+            return json_response(data=form.data)
+        else:
+            return json_response(code=1, errors=form.errors)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='公告id', required=False)
+        args = parser.parse_args()
+        model = DepartmentModel()
+        notice = model.get_data_by_id(self.__table__, args['id'])
+        if notice['department_id'] != request.user['department_id']:
+            return json_response(code=1, message="不能操作其他部门公告")
+        model.execute_delete(self.__table__, ['id={}'.format(args['id'])])
+        return json_response(data=notice)
