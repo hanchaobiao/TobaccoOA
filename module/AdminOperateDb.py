@@ -47,8 +47,8 @@ class AdminOperateModel(BaseDb):
         :return:
         """
         sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin " \
-              "JOIN sys_admin_role ON role_id=sys_admin_role.id WHERE role_id IN (1, 2, 3) " \
-              "AND sys_admin_role.level<%s OR sys_admin.id=%s"
+              "JOIN sys_admin_role ON role_id=sys_admin_role.id WHERE role_id IN (2, 3) " \
+              "AND sys_admin_role.level<=%s OR sys_admin.id=%s"
         self.dict_cur.execute(sql, (admin['role_level'], admin['id']))
         rows = self.dict_cur.fetchall()
         return rows
@@ -92,6 +92,31 @@ class AdminOperateModel(BaseDb):
                 data_list.append(date_dict)
         return {""
                 "query_user": user_list, "list": rows, "day_total": data_list}
+
+    def get_tax_progress(self, year):
+        """
+        完成税率
+        :param year:
+        :return:
+        """
+        sql = "SELECT * FROM tax_progress WHERE year=%s"
+        self.dict_cur.execute(sql, year)
+        row = self.dict_cur.fetchone()
+        sql = "SELECT distinct year FROM tax_progress order by year"
+        self.dict_cur.execute(sql)
+        years = self.dict_cur.fetchall()
+        return {"tax": row, "years": years}
+
+    def replace_tax_progress(self, data):
+        """
+        完成税率
+        :param data:
+        :return:
+        """
+        sql = "REPLACE INTO tax_progress(`year`, complete_tax_money, total_tax_money, modify_time)" \
+              " VALUES(%s, %s, %s, now())"
+        count = self.dict_cur.execute(sql, (data['year'], data['complete_tax_money'], data['total_tax_money']))
+        return count
 
 
 if __name__ == "__main__":

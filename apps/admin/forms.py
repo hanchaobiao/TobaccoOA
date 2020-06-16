@@ -39,6 +39,7 @@ class AddAdminForm(Form):
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                         Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
     role_id = IntegerField("角色", validators=[DataRequired("请选择角色")])
+    sort_index = IntegerField("显示排名", validators=[DataRequired("请设置显示排名")])
 
 
 class UpdateAdminForm(Form):
@@ -57,6 +58,7 @@ class UpdateAdminForm(Form):
     phone = StringField("手机号码", validators=[DataRequired(message="请输入手机号码"),
                                             Regexp(MOBILE_REGEX, message="请输入合法的手机号码")])
     role_id = IntegerField("角色", validators=[DataRequired("请选择角色")])
+    sort_index = IntegerField("显示排名", validators=[DataRequired("请设置显示排名")])
 
     # noinspection PyMethodMayBeStatic
     def validate_password(self, field):

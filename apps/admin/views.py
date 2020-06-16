@@ -5,7 +5,6 @@
 # @File    : views.py
 # @Software: PyCharm
 import datetime
-import hashlib
 
 from flask import request
 from flask_restful import Resource, reqparse
@@ -62,7 +61,7 @@ class LogoutView(Resource):
         :return:
         """
         RedisPool().set_offline_status(request.user['id'])
-        return json_response(message='退出成功')
+        return json_response(code=0, message='退出成功')
 
 
 class AdminRoleView(Resource):
@@ -83,7 +82,6 @@ class AdminLoginLogView(Resource):
         :return:
         """
         parser = reqparse.RequestParser()
-        print(request.values.to_dict())
         parser.add_argument("name", type=str, help="用户名", required=False)
         parser.add_argument("start_time", type=str, help="开始时间", required=True, default=datetime.datetime.now().date())
         parser.add_argument("end_time", type=str, help="结束时间", required=True, default=datetime.datetime.now())
@@ -92,7 +90,7 @@ class AdminLoginLogView(Resource):
         parser.add_argument("page_size", type=int, help="页数", required=False, default=20)
         args = parser.parse_args()
         admin = AdminModel()
-        result = admin.get_login_log_list(admin, args['name'], args['start_time'], args['end_time'], args['sort'],
+        result = admin.get_login_log_list(request.user, args['name'], args['start_time'], args['end_time'], args['sort'],
                                           args['page'], args['page_size'])
         return json_response(data=result)
 
@@ -108,7 +106,7 @@ class AdminOperateLogView(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help="id", required=False, default=None)
-        parser.add_argument("admin_id", type=str, help="操作人", required=False)
+        parser.add_argument("name", type=str, help="操作人", required=False)
         parser.add_argument("operate_type", type=str, help="操作类型", required=False)
         parser.add_argument("start_time", type=str, help="开始时间", required=False, default=datetime.datetime.now().date())
         parser.add_argument("end_time", type=str, help="结束时间", required=False, default=datetime.datetime.now())
@@ -120,7 +118,7 @@ class AdminOperateLogView(Resource):
         if args['id']:
             result = admin.get_operate_log_detail(int(args['id']))
         else:
-            result = admin.get_operate_log_list(admin, args['admin_id'], args['operate_type'], args['start_time'],
+            result = admin.get_operate_log_list(request.user, args['name'], args['operate_type'], args['start_time'],
                                                 args['end_time'], args['sort'], args['page'], args['page_size'])
         return json_response(data=result)
 
@@ -291,11 +289,11 @@ class AdminMessageView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("type", type=str, help='消息类型', required=False)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
-        parser.add_argument("page_size", type=int, help='页数', required=False, default=10)
+        # parser.add_argument("page_size", type=int, help='页数', required=False, default=10)
         args = parser.parse_args()
         am = AdminModel()
         admin = request.user
-        result = am.get_my_message_list(admin, args['type'], args['page'], args['page_size'])
+        result = am.get_my_message_list(admin, args['type'])
         return json_response(data=result)
 
     @admin_login_req
@@ -303,7 +301,8 @@ class AdminMessageView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='消息id', required=False)
         args = parser.parse_args()
-        am = AdminModel()
+        model = AdminModel()
+        msg = model.get_data_by_id(self.__table__, args['id'])
         args['receive_time'] = datetime.datetime.now()
-        am.execute_update(self.__table__, args['id'], args, extra_conditions=['receive_time IS NULL'])
-        return json_response(data={})
+        model.execute_update(self.__table__, args, msg, extra_conditions=['receive_time IS NULL'])
+        return json_response(message="签收成功", data={})

@@ -27,7 +27,7 @@ class UpdateWishForm(Form):
     id = IntegerField("心愿id", validators=[DataRequired("心愿id必填")])
     name = StringField("心愿名称", validators=[DataRequired(message="心愿名称"), Length(max=60)])
     wish_content = StringField("任务介绍", validators=[DataRequired(message="任务介绍不能为空")])
-    file_ids = MultipleFileField("文件列表")
+    file_ids = MultipleFileField("文件列表", default=[])
 
 
 class AuditWishForm(Form):

@@ -33,19 +33,19 @@ def admin_login_req(method):
                 send_data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'],
                                        leeway=JWT_EXPIRE, options={"verify_exp": True})
                 admin = RedisPool().get_admin(send_data['id'])
-                # admin = {'id': 2, 'username': 'hancb', 'real_name': '韩朝彪', 'phone': '17600093237', 'sex': '男', 'position': '经理', 'department_id': 1, 'is_disable': 0, 'is_delete': 0, 'role_id': 1, "role_level": 9}
                 if admin is None:
                     return json_response(code=402, message="请重新登陆")
                 if admin['is_disable']:
                     return json_response(code=1, message="账户被禁用")
                 request.user = admin  # 赋值
+                RedisPool().set_online_status(admin)
                 return method(*args, **kwargs)
             except jwt.ExpiredSignatureError as e:  # 签名过期
                 print(e)
-                return json_response(code=402, message="签名过期")
+                return json_response(code=402, message="签名过期，请重新登陆")
             except jwt.InvalidSignatureError as e:
                 print(e)
-                return json_response(code=402, message="签名错误")
+                return json_response(code=402, message="签名错误，请重新登陆")
         else:
             return json_response(code=402, message="请登录")
     return wrapper

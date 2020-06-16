@@ -1,5 +1,4 @@
 import re
-from enum import Enum
 
 from flask import request
 
@@ -42,7 +41,7 @@ class BaseDb(object):
         else:
             ip = request.remote_addr
         admin_id = request.user['id']
-        sql = "INSERT INTO sys_admin_operate_log(name, table_name, table_id, action_type, operator_id, ip, add_time)" \
+        sql = "INSERT INTO sys_admin_operate_log(name, table_name, table_id, operate_type, operator_id, ip, add_time)" \
               " VALUES(%s, %s, %s, %s, %s, %s, NOW())"
         self.dict_cur.execute(sql, (action_desc, table_name, table_id, method, admin_id, ip))
         insert_id = self.dict_cur.lastrowid
@@ -204,7 +203,10 @@ class BaseDb(object):
         count_sql = sql.replace(result[0][1], ' COUNT(*) as number ')
 
         if sort:
-            sql += " ORDER BY {} {} ".format(sort[0], sort[1])
+            if isinstance(sort[0], tuple):
+                sql += " ORDER BY " + ','.join([" {} {} ".format(item[0], item[1]) for item in sort])
+            else:
+                sql += " ORDER BY {} {} ".format(sort[0], sort[1])
         sql = sql.strip(",")
         if page is not None:
             page = 0 if int(page) < 1 else int(page) - 1
@@ -216,7 +218,9 @@ class BaseDb(object):
         else:
             self.dict_cur.execute(count_sql)
         data = self.dict_cur.fetchone()
-        count = list(data.values())[0]
+        if data is None:
+            return {"count": 0, "list": []}
+        count = data['number']
         # 列表
         if args:
             self.dict_cur.execute(sql, args)
@@ -252,7 +256,6 @@ class BaseDb(object):
         sql = "UPDATE {} SET {} WHERE id={}".format(table_name, update, update_data['id'])
         if len(extra_conditions) > 0:
             sql += " AND " + " AND ".join(extra_conditions)
-        print(sql)
         count = self.dict_cur.execute(sql)
         return count
 
@@ -267,29 +270,4 @@ class BaseDb(object):
         if len(conditions) > 0:
             sql += " WHERE " + " AND ".join(conditions)
         count = self.dict_cur.execute(sql)
-        return count
-
-    def get_tax_progress(self, year):
-        """
-        完成税率
-        :param year:
-        :return:
-        """
-        sql = "SELECT * FROM tax_progress WHERE year=%s"
-        self.dict_cur.execute(sql, year)
-        row = self.dict_cur.fetchone()
-        sql = "SELECT distinct year FROM tax_progress order by year"
-        self.dict_cur.execute(sql)
-        years = self.dict_cur.fetchall()
-        return {"tax": row, "years": years}
-
-    def replace_tax_progress(self, data):
-        """
-        完成税率
-        :param data:
-        :return:
-        """
-        sql = "REPLACE INTO tax_progress(`year`, complete_tax_money, total_tax_money, modify_time)" \
-              " VALUES(%s, %s, %s, now())"
-        count = self.dict_cur.execute(sql, (data['year'], data['complete_tax_money'], data['total_tax_money']))
         return count

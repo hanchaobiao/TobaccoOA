@@ -171,8 +171,10 @@ class AdminModel(BaseDb):
 
         sql = "SELECT sys_admin.real_name, sys_admin.position, log.* FROM sys_admin JOIN sys_admin_login_log as log " \
               "on sys_admin.id=log.admin_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
+        if admin['role_id'] != 1:
+            sql += " AND admin_id={} ".format(admin['id'])
         if name and name.strip():
-            sql = sql + " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
+            sql += " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
         result = self.query_paginate(sql, start_time, end_time, sort=['log.add_time', sort_type],
                                      page=page, page_size=page_size)
         return result
@@ -188,11 +190,11 @@ class AdminModel(BaseDb):
         return self.dict_cur.fetchall()
         return result
 
-    def get_operate_log_list(self, admin, admin_id, operate_type, start_time, end_time, sort_type, page, page_size):
+    def get_operate_log_list(self, admin, name, operate_type, start_time, end_time, sort_type, page, page_size):
         """
         获取修改日志列表
         :param admin:
-        :param admin_id:
+        :param name:
         :param operate_type:
         :param start_time:
         :param end_time:
@@ -203,11 +205,12 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.real_name, log.* FROM sys_admin JOIN sys_admin_operate_log as log " \
               "on sys_admin.id=log.operator_id WHERE DATE_FORMAT(log.add_time, '%%Y-%%m-%%d') BETWEEN %s AND %s"
-        if admin_id:
-            sql += " AND admin_id={} ".format(admin_id)
+        if admin['role_id'] != 1:
+            sql += " AND operator_id={} ".format(admin['id'])
         if operate_type:
-            sql + " AND operate_type='{}'".format(escape_string(operate_type.strip()))
-
+            sql += " AND operate_type='{}'".format(escape_string(operate_type.strip()))
+        if name and name.strip():
+            sql += " AND real_name like '%%{}%%'".format(escape_string(name.strip()))
         result = self.query_paginate(sql, start_time, end_time, sort=['log.add_time', sort_type],
                                      page=page, page_size=page_size)
         return result
@@ -272,7 +275,7 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.id, username, real_name, sex, phone, position, is_disable, last_login_time, status, " \
               "sys_admin.add_time, department_id, dict_department.name as department, dict_department.leader_id, " \
-              "dict_department.level, role_id, sys_admin_role.role_name " \
+              "dict_department.level, role_id, sys_admin_role.role_name, sys_admin.sort_index  " \
               "FROM sys_admin LEFT JOIN sys_admin_role ON sys_admin.role_id=sys_admin_role.id " \
               "LEFT JOIN dict_department ON sys_admin.department_id=dict_department.id " \
               "WHERE sys_admin.is_delete=0 "
@@ -285,10 +288,10 @@ class AdminModel(BaseDb):
             sql += " AND phone like '%{}%' ".format(phone)
         if start_date and end_date:
             sql += " AND DATE_FORMAT(add_time, '%%Y-%%m-%%d') BETWEEN '{}' AND '{} ".format(start_date, end_date)
-        result = self.query_paginate(sql, page=page, page_size=page_size)
+        result = self.query_paginate(sql, sort=[('sys_admin_role.sort_index', 'asc'), ('sys_admin.sort_index', 'asc')],
+                                     page=page, page_size=page_size)
         if len(result['list']) == 0:
             return result
-
         redis = RedisPool()
         for user in result['list']:
             user['is_online'] = redis.check_online_status(user['id'])
@@ -301,13 +304,14 @@ class AdminModel(BaseDb):
         :param role_ids:
         :return:
         """
-        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin "
+        sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin LEFT JOIN dict_department " \
+              "ON department_id=dict_department.id WHERE sys_admin.is_delete=0 "
         constraints = []
         if role_ids:
-            constraints.append(" role_id IN %s" % str(tuple(role_ids)).replace(",)", ")"))
+            sql += " AND role_id IN %s " % str(tuple(role_ids)).replace(",)", ")")
         if department_id:
-            constraints.append(f" department_id={department_id}")
-        sql = self.append_query_conditions(sql, constraints)
+            sql += " AND (dict_department.id={id} OR path like '{id},%' OR path like '%,{id},%' " \
+                   " OR path like '%,{id}')".format(id=department_id)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         return rows
@@ -356,16 +360,18 @@ class AdminModel(BaseDb):
         count = self.dict_cur.execute(sql, admin_id)
         return count
 
-    def get_my_message_list(self, admin, msg_type, page, page_size):
+    def get_my_message_list(self, admin, msg_type):
         """
         获取个人消息
         :return:
         """
-        sql = "SELECT * FROM sys_message WHERE receive_id={} AND receive_time IS NULL".format(admin['id'])
-        if msg_type:
-            sql += " AND `type`='{}'".format(msg_type)
-        result = self.query_paginate(sql, sort=['send_time', 'desc'], page=page, page_size=page_size)
-        return result
+        sql = "SELECT id, title, send_time, `type` FROM sys_message WHERE receive_id=%s AND receive_time IS NULL" \
+              " ORDER BY send_time DESC"
+        # if msg_type:
+        #     sql += " AND `type`='{}'".format(msg_type)
+        self.dict_cur.execute(sql, admin['id'])
+        rows = self.dict_cur.fetchall()
+        return {"count": len(rows), "list": rows}
 
 
 if __name__ == "__main__":

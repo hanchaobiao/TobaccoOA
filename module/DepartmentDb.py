@@ -103,8 +103,10 @@ class DepartmentModel(BaseDb):
         :param department_id:
         :return:
         """
-        sql = "SELECT id, name FROM dict_department WHERE is_delete=0 AND (id={pid} or path like '{pid},%' " \
-              "or path like '%,{pid},%' or path like '%,{pid}')".format(pid=department_id)
+        sql = "SELECT id, name FROM dict_department"
+        if department_id:
+            sql += " WHERE is_delete=0 AND (id={pid} or path like '{pid},%' " \
+                   "or path like '%,{pid},%' or path like '%,{pid}')".format(pid=department_id)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         child_dict = {row['id']: row for row in rows}
@@ -160,6 +162,31 @@ class DepartmentModel(BaseDb):
         count = self.dict_cur.execute(sql, department_id)
         return count
 
+    def get_department_notice_list(self, department_id, title, page, page_size):
+        """
+        部门通知
+        :param department_id:
+        :param title:
+        :param page:
+        :param page_size:
+        :return:
+        """
+        sql = """
+            SELECT notice.*, real_name, dict_department.name FROM department_notice notice 
+            LEFT JOIN dict_department ON notice.department_id=dict_department.id
+            LEFT JOIN sys_admin ON notice.operator_id=sys_admin.id
+            """
+        conditions = []
+        if department_id:
+            conditions.append(f' notice.department_id={department_id} ')
+        if title:
+            conditions.append(f' title LIKE "%{title}%" ')
+        sql = self.append_query_conditions(sql, conditions)
+        result = self.query_paginate(sql, sort=[("notice.add_time", 'desc')], page=page, page_size=page_size)
+        return result
+
 
 if __name__ == "__main__":
     am = DepartmentModel()
+    print(am.get_department_notice_list(3, '哈哈', 1, 10))
+

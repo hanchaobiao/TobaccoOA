@@ -5,7 +5,8 @@
 # @File    : urls.py
 # @Software: PyCharm
 from apps import api
-from apps.oversee.views import ReleaseOverseeTaskView, SubmitOverseeTaskView, AuditOverseeTaskView, OverseeMessageTaskView
+from apps.oversee.views import ReleaseOverseeTaskView, SubmitOverseeTaskView, AuditOverseeTaskView,\
+    OverseeMessageTaskView
 
 
 api.add_resource(ReleaseOverseeTaskView, "/task/release")

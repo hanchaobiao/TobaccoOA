@@ -1,13 +1,26 @@
-import os
-# 通过环境变量DEPLOY判断读取的配置文件
-# linux 下 在个人目录中的 .bash_profile设置环境变量
-# report DEPLOY=prod
-# os.environ.setdefault('DEPLOY', 'prod')
-deploy = os.environ.get("DEPLOY") or "dev"
-print('此时的环境变量', deploy)
-if deploy == 'dev':
+import socket
+
+
+def get_host_ip():
+    """
+    查询本机ip地址
+    :return:
+    """
+    try:
+        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
+
+
+ip_addr = get_host_ip()
+print(ip_addr)
+
+if ip_addr != '172.16.83.219':
+    print('测试环境')
     from settings.local import *
-elif deploy == 'prod':
-    from settings.prod import *  # todo 暂时 测试环境
 else:
-    from settings.local import *
+    print('生产环境')
+    from settings.prod import *  # todo 暂时 测试环境

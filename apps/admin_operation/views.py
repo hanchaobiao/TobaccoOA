@@ -6,7 +6,7 @@
 # @Software: PyCharm
 import os
 import datetime
-import hashlib
+import mimetypes
 from copy import deepcopy
 
 import pymysql
@@ -14,7 +14,7 @@ from flask import request, make_response
 from flask_restful import Resource, reqparse
 from apps import MEDIA_PATH
 from apps.admin_operation.forms import AddDepartmentForm, UpdateDepartmentForm, AddMemoEventForm, UpdateMemoEventForm,\
-    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm
+    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm, AddDepartmentNoticeForm, UpdateDepartmentNoticeForm
 from module.AdminDb import AdminModel
 from module.AdminOperateDb import AdminOperateModel
 from module.DepartmentDb import DepartmentModel
@@ -53,9 +53,15 @@ class AdminSelectView(Resource):
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=str, help='类型', required=False, default=None)
-        parser.add_argument("type", type=str, help='角色类型', choices=['oversee', 'agent'], required=True)
+        parser.add_argument("type", type=str, help='角色类型', choices=['oversee', 'agent', 'coordinator'], required=True)
         args = parser.parse_args()
-        role_ids = [1, 2, 3] if args['type'] == 'oversee' else [4]
+
+        if args['type'] == 'oversee':
+            role_ids = [1, 2, 3]
+        elif args['type'] == 'agent':
+            role_ids = [1, 4, 6]
+        else:
+            role_ids = [5]
         result = AdminModel().get_admin_by_department_role(args['department_id'], role_ids)
         return json_response(code=0, data=result)
 
@@ -212,35 +218,58 @@ class FileManageView(Resource):
         else:
             return json_response(code=1, message='文件不存在')
 
+    @admin_login_req
+    @allow_role_req([1])
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='文件id', required=True)
+        args = parser.parse_args()
+        model = FileManageModel()
+        file_info = model.get_data_by_id(self.__table__, args['id'])
+        if file_info:
+            flag = model.is_used_file(args['id'])
+            if flag is False:
+                model.execute_delete(self.__table__, ['id=%s' % args['id']])
+                model.delete_log(self.__table__, args['id'], "删除文件：{}".format(file_info['file_name']), file_info)
+                try:
+                    os.remove(os.path.join(MEDIA_PATH, file_info['file_path']))
+                except Exception as e:
+                    print(e)
+                return json_response(data=args)
+            else:
+                return json_response(code=1, message="文件已被督办事务使用，不能删除")
+        else:
+            return json_response(code=1, message='文件不存在')
+
 
 class DownloadFileView(Resource):
     """
     下载文件
     """
 
-    @staticmethod
     @admin_login_req
-    @allow_role_req([1, 2, 3, 4])
-    def post():
+    def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("id", type=int, help='文件id', required=True)
-        parser.add_argument("file_type", type=str, choices=['wish', 'oversee_submit', 'file_db'],
-                            help='文件id', required=True)
+        parser.add_argument("file_path", type=str, help='文件必填', required=True)
         args = parser.parse_args()
         try:
-            file_info = FileManageModel().get_file_by_id(args['id'])
-            if file_info:
-                path = os.path.join(MEDIA_PATH, file_info['file_path'])
-                with open(path, mode='rb') as f:
+            file_path = os.path.join(MEDIA_PATH, args['file_path'].strip("/"))
+            if os.path.exists(file_path):
+                with open(file_path, mode='rb') as f:
                     content = f.read()
-                response = make_response(content)
-                response.headers['Content-Type'] = file_info['format']
-                filename = file_info['file_name']+'.'+file_info['format']
-                response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename.encode().decode('latin-1'))
-                return response
+                rv = make_response(content)
+                filename = file_path.rsplit('/')[-1].rsplit("_")[-1]
+                mime_type = mimetypes.guess_type(filename)[0]
+                rv.headers['Content-Type'] = mime_type
+                rv.headers["Cache-Control"] = "no-cache"
+                rv.headers['Content-Disposition'] = 'attachment; filename={}'.format(
+                    filename.encode().decode('latin-1'))
+                return rv
             else:
                 return json_response(code=1, message='文件不存在')
         except Exception as err:
+            import traceback
+            traceback.print_exc()
             print('download_file error: {}'.format(str(err)))
             return json_response(code=1, message='下载异常')
 
@@ -296,13 +325,13 @@ class MemoEventView(Resource):
         parser.add_argument("id", type=int, help='id', required=True)
         args = parser.parse_args()
         model = AdminModel()
-        memo = model.execute_delete(self.__table__, [f'id={args["id"]}', 'admin_id={}'.format(request.user['id'])])
+        memo = model.get_data_by_id(self.__table__, args['id'])
         if memo is None:
             return json_response(code=1, message="无此备忘记录")
         if memo['admin_id'] != request.user['id']:
             return json_response(code=1, message="无权限操作此备忘录")
-        model.execute_update(self.__table__, args, memo)
-        return json_response(code=0, message="修改成功")
+        model.execute_delete(self.__table__, [f'id={args["id"]}', 'admin_id={}'.format(request.user['id'])])
+        return json_response(code=0, message="删除成功")
 
 
 class ScheduleView(Resource):
@@ -385,12 +414,12 @@ class ScheduleView(Resource):
         model = AdminOperateModel()
         schedule = model.get_data_by_id(self.__table__, args['id'])
         if schedule is None:
-            return json_response(code=1, message="无此日程记录")
+            return json_response(code=1, message="无此行程记录")
         admin = request.user
         if admin['role_id'] in [1, 2] and request.user['id'] != schedule['arranged_id']:
             return json_response(code=1, message="无权删除此人安排行程")
         model.execute_delete(self.__table__, [f'id={args["id"]}', 'arranged_id={}'.format(admin['id'])])
-        model.delete_log(self.__table__, schedule['id'], desc="删除行程：{}".format(schedule['title']))
+        model.delete_log(self.__table__, schedule['id'], "删除行程：{}".format(schedule['title']), schedule)
         if admin['id'] != schedule['arranged_id']:
             send_sys_message([{"type": "行程", "status": "待签收", "send_time": datetime.datetime.now(),
                                "receive_id": schedule['arranged_id'],
@@ -425,3 +454,67 @@ class TaxProgressView(Resource):
             return json_response(data=tax)
         else:
             return json_response(code=1, errors=form.errors)
+
+
+class DepartmentNoticeView(Resource):
+    """
+    部门通知
+    """
+
+    __table__ = 'department_notice'
+
+    @admin_login_req
+    # @allow_role_req(role_ids=[4])
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("department_id", type=int, help='部门id', required=False)
+        parser.add_argument("title", type=str, help='标题', required=False)
+        parser.add_argument("page", type=int, help='页码', required=False, default=1)
+        parser.add_argument("page_size", type=int, help='每页数量', required=False, default=10)
+        args = parser.parse_args()
+        # args['department_id'] = request.user['department_id']
+        tax = DepartmentModel().get_department_notice_list(args['department_id'], args['title'],
+                                                           args['page'], args['page_size'])
+        return json_response(data=tax)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def post(self):
+        form = AddDepartmentNoticeForm().from_json(request.json)
+        if form.validate():
+            model = DepartmentModel()
+            data = dict(form.data)
+            data['operator_id'] = request.user['id']
+            data['department_id'] = request.user['department_id']
+            data['add_time'] = datetime.datetime.now()
+            notice = model.execute_insert(self.__table__, **data)
+            return json_response(data=notice)
+        else:
+            return json_response(code=1, errors=form.errors)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def put(self):
+        form = UpdateDepartmentNoticeForm().from_json(request.json)
+        if form.validate():
+            model = DepartmentModel()
+            notice = model.get_data_by_id(self.__table__, form.data['id'])
+            if notice['department_id'] != request.user['department_id']:
+                return json_response(code=1, message="不能操作其他部门公告")
+            model.execute_update(self.__table__, form.data, notice)
+            return json_response(data=form.data)
+        else:
+            return json_response(code=1, errors=form.errors)
+
+    @admin_login_req
+    @allow_role_req([4])
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=int, help='公告id', required=False)
+        args = parser.parse_args()
+        model = DepartmentModel()
+        notice = model.get_data_by_id(self.__table__, args['id'])
+        if notice['department_id'] != request.user['department_id']:
+            return json_response(code=1, message="不能操作其他部门公告")
+        model.execute_delete(self.__table__, ['id={}'.format(args['id'])])
+        return json_response(data=notice)

@@ -13,26 +13,25 @@ LOGGER_LEVEL = "INFO"
 
 
 MYSQL = {
-    "db": "tobacco",
+    "db": "tobacco_office",
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "passwd": "bjmrkj_2019",
+    "passwd": "hbuasxyl_2019",
 }
-
 
 REDIS = {
         "host": "127.0.0.1",
         "port": "6379",
         "db": 1,
-        "password": "bjmrkj_2019"
+        "password": "hbuasxyl_2019"
 }
 
 
 # Token 有效期
 JWT_EXPIRE = 7*7*3600
 
-ACTIVE_EXPIRE = 3*60
+ACTIVE_EXPIRE = 10*60
 
 MEDIA_PREFIX = "http://47.99.51.135:8010/media"
 

@@ -84,3 +84,20 @@ class TaxProgressForm(Form):
     complete_tax_money = DecimalField("完成税额",  places=10, rounding=2)
     total_tax_money = DecimalField("模板税额", places=10, rounding=2)
     year = StringField("年份", validators=[DataRequired(message="年份不能为空"), Length(min=4, max=4)])
+
+
+class AddDepartmentNoticeForm(Form):
+    """
+    发布公告
+    """
+    title = StringField("公告标题",  validators=[DataRequired(message="公告标题必填"), Length(max=30)])
+    content = StringField("公告内容", validators=[DataRequired(message="公告内容必填"), Length(max=255)])
+
+
+class UpdateDepartmentNoticeForm(Form):
+    """
+    发布公告
+    """
+    id = IntegerField("公告id", validators=[DataRequired(message="公告id不能为空")])
+    title = StringField("公告标题",  validators=[DataRequired(message="公告标题必填"), Length(max=30)])
+    content = StringField("公告内容", validators=[DataRequired(message="公告内容必填"), Length(max=255)])

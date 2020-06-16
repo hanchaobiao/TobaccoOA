@@ -78,6 +78,8 @@ class EmployeeWishView(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='心愿id', required=False, default=None)
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
+        parser.add_argument('type', type=str, help='类型', choices=['ALL', 'AGENT', 'RELEASE'],
+                            required=False, default='ALL')
         parser.add_argument("status", type=str, help='执行状态', choices=['', '待审核', '驳回', '待签收', '待提交', '心愿完成'],
                             required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
@@ -87,7 +89,7 @@ class EmployeeWishView(Resource):
         if args['id']:
             result = model.get_employee_wish_detail(request.user, args['id'])
         else:
-            result = model.get_employee_wish_list(request.user, args['name'], args['status'],
+            result = model.get_employee_wish_list(request.user, args['name'], args['type'], args['status'],
                                                   args['page'], args['page_size'])
         return json_response(data=result)
 
@@ -100,6 +102,13 @@ class EmployeeWishView(Resource):
             data['status'] = '待审核'
             data['employee_id'] = request.user['id']
             model = WishModel()
+
+            if 'X-Real-Ip' in request.headers:  # 通过代理后，仍能获取客户端真实ip,需在nginx/apache进行配置
+                ip = request.headers['X-Real-Ip']
+            else:
+                ip = request.remote_addr
+            data['ip'] = ip
+
             data['id'] = model.execute_insert(self.__table__, **data)
             result = upload_file('wish', wish_id=data['id'], file_type=1)
             if result['code'] == 1:
@@ -115,13 +124,13 @@ class EmployeeWishView(Resource):
         form = UpdateWishForm().from_json(request.values.to_dict())
         if form.validate():
             update_data = dict(form.data)
+            file_ids = [int(_id) for _id in update_data.pop("file_ids")]
             model = WishModel()
             wish = model.get_data_by_id(self.__table__, form.data['id'])
             if wish['employee_id'] != request.user['id']:
                 return json_response(code=1, message="该心愿无权操作")
             if wish['status'] != '待审核':
                 return json_response(code=1, message="该心愿已经审核，无法修改")
-            file_ids = update_data.pop("file_ids")
             model.execute_update(self.__table__, update_data, wish)
             result = upload_file('wish', wish_id=wish['id'], file_type=1)
             if result['code'] == 1:
@@ -222,4 +231,32 @@ class SubmitWishView(Resource):
                 return json_response(data=data, message="心愿办理资料提交失败")
         else:
             return json_response(code=1, errors=form.errors)
+
+
+class DpWishGiveLikeView(Resource):
+    """
+    大屏心愿点赞
+    """
+
+    __table__ = 'employee_wish'  # 操作表
+
+    @admin_login_req
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("id", type=str, help='心愿id', required=False, default=None)
+        args = parser.parse_args()
+        model = WishModel()
+        wish = model.get_data_by_id(self.__table__, args['id'])
+        if wish is None:
+            return json_response(code=1, message='心愿不存在')
+        if wish['status'] == '心愿完成':
+            return json_response(code=1, message='心愿未完成，不能点赞')
+        count = model.execute_update(self.__table__, args['id'], {"give_like_num": wish['give_like_num']+1}, wish,
+                                     extra_conditions={"give_like_num": wish['give_like_num']})
+        if count:
+            model.execute_insert('employee_wish_give_like_record', wish_id=args['id'], operator_id=request.user['id'],
+                                 add_time=datetime.datetime.now())
+            return json_response(message="点赞成功")
+        else:
+            return json_response(message="点赞人数过多，请重试")
 

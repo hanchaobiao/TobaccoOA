@@ -17,8 +17,6 @@ class AddOverseeDetailTaskForm(Form):
     修改部门
     """
 
-    # name = StringField("任务名称", validators=[DataRequired(message="任务名称不能为空"), Length(max=60)])
-    # introduce = StringField("任务介绍", validators=[DataRequired(message="任务介绍不能为空")])
     agent_id = IntegerField("经办人", validators=[DataRequired(message="经办人不能为空")])
     department_id = IntegerField("部门id", validators=[DataRequired(message="部门id")])
     start_time = StringField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
@@ -44,13 +42,11 @@ class UpdateOverseeDetailTaskForm(Form):
     修改督办任务子任务
     """
     id = IntegerField("子任务id", validators=[DataRequired("子任务id必填")])
-    # name = StringField("任务名称", validators=[DataRequired(message="任务名称不能为空"), Length(max=60)])
-    # introduce = StringField("任务介绍", validators=[DataRequired(message="任务介绍不能为空")])
-    # agent_id = IntegerField("经办人", validators=[DataRequired(message="经办人不能为空")])
-    # department_id = IntegerField("部门id", validators=[DataRequired(message="部门id")])
+    agent_id = IntegerField("经办人", validators=[DataRequired(message="经办人不能为空")])
+    department_id = IntegerField("部门id", validators=[DataRequired(message="部门id")])
     start_time = DateTimeField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
     end_time = DateTimeField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
-    # coordinator_ids = MultipleFileField(label="协办人", default=[])
+    coordinator_ids = MultipleFileField(label="协办人", default=[])
 
 
 class UpdateOverseeTaskForm(Form):
@@ -63,9 +59,7 @@ class UpdateOverseeTaskForm(Form):
     name = StringField("任务名称", validators=[DataRequired(message="任务名称不能为空"), Length(max=60)])
     file_ids = MultipleFileField(label="涉及文件")
     introduce = StringField("任务介绍", validators=[DataRequired(message="任务介绍不能为空")])
-    # oversee_id = IntegerField("督办人", validators=[DataRequired(message="督办人不能为空")])
-    # start_time = DateTimeField("开始时间", validators=[DataRequired(message="开始时间不能为空")])
-    # end_time = DateTimeField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
+    oversee_id = IntegerField("督办人", validators=[DataRequired(message="督办人不能为空")])
     oversee_details = FieldList(FormField(UpdateOverseeDetailTaskForm), validators=[DataRequired(message="子任务不能为空")])
 
 

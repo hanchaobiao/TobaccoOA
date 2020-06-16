@@ -146,10 +146,20 @@ def oversee_message():
     # print(response.text)
 
 
+def department_sort():
+    """
+    测试导入员工数据
+    :return:
+    """
+    response = requests.get(f"{web_url}/report/departmentSort", headers=headers, params={"date": '2020-06'})
+    print(response.text)
+
+
 if __name__ == "__main__":
     # department_test()
     # upload_file()
     # task_release()
     # audit_task()
     # submit_task()
-    oversee_message()
+    # oversee_message()
+    department_sort()
