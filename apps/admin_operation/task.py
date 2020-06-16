@@ -30,16 +30,17 @@ def upload_file(dir_name, **kwargs):
         file_info['file_name'] = f.filename
         file_info['format'] = f.filename.split(".")[-1]
         file_info['size'] = len(content)
-        new_filename = str(now_time).replace(" ", '-') + '_' + f.filename
+        new_filename = now_time.strftime('%Y%m%d%H%M%S') + '_' + f.filename
         base_bath = os.path.join(MEDIA_PATH, dir_name, now_time.strftime('%Y%m'))
         if os.path.exists(base_bath) is False:
             os.makedirs(base_bath)
         file_path = os.path.join(base_bath, new_filename)
-        with open(file_path, mode='wb') as fp:
+        with open(file_path, mode='wb+') as fp:
             fp.write(content)
         file_info['add_time'] = now_time
         # file_info['url'] = parse.urljoin(MEDIA_PREFIX, file_path)
         file_info['admin_id'] = request.user['id']
-        file_info['file_path'] = file_path.replace(MEDIA_PATH, '').strip('/')
+        file_info['file_path'] = file_path.replace(MEDIA_PATH, '')
+        file_info['file_path'] = file_info['file_path'].replace('\\', '/').strip('/')
         file_list.append(file_info)
     return {"code": 0, "data": file_list}

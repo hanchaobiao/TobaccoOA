@@ -4,6 +4,3 @@
 # @Email   : 1017421922@qq.com
 # @File    : __init__.py.py
 # @Software: PyCharm
-import os
-
-print(os.path.join('/as/ad', 'ddd/dd'))

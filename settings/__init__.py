@@ -15,12 +15,12 @@ def get_host_ip():
     return ip
 
 
-ip_addr = get_host_ip()
+ip_address = get_host_ip()
 
-if ip_addr != '172.16.83.219':
+if ip_address != '172.16.83.219':
     print('测试环境')
     from settings.local import *
-    MEDIA_PREFIX = "http://{}:8010/media".format(ip_addr)
+    MEDIA_PREFIX = "http://{}:8010/media/".format(ip_address)
 else:
     print('生产环境')
     from settings.prod import *  # todo 暂时 测试环境

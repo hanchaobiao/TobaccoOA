@@ -223,12 +223,6 @@ class SubmitOverseeTaskView(Resource):
     __table__ = 'oversee_task_detail'  # 操作表
     __table_desc__ = '提交任务'
 
-    @staticmethod
-    def allowed_file(filename):
-        if filename.split(".")[-1] not in ["jpg", "jpeg", "png", "gif", "doc", "docx", "xls", "xlsx", "pdf"]:
-            return False
-        return True
-
     @admin_login_req
     # @allow_role_req([4])
     def post(self):

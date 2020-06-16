@@ -8,6 +8,7 @@ from pymysql import escape_string
 from apps import MEDIA_PATH
 from settings import MEDIA_PREFIX
 from resources.base import BaseDb
+from apps.utils.validate import allowed_file
 
 
 class FileManageModel(BaseDb):
@@ -74,12 +75,6 @@ class FileManageModel(BaseDb):
                 res['size'] = str(round(res['size']/1024/1024, 2)) + 'MB'
         return result
 
-    @staticmethod
-    def allowed_file(filename):
-        if filename.split(".")[-1] not in ["jpg", "jpeg", "png", "gif", "doc", "docx", "xls", "xlsx", "pdf"]:
-            return False
-        return True
-
     def insert_file_info(self, file_info, f):
         """
         添加文件信息
@@ -90,7 +85,7 @@ class FileManageModel(BaseDb):
         file_info['format'] = f.filename.split(".")[-1]
         file_info['file_name'] = f.filename.replace(".{}".format(file_info['format']), '')
         file_info['size'] = len(f.read())
-        if f and self.allowed_file(f.filename):
+        if f and allowed_file(f.filename):
             new_filename = str(now_time).replace(" ", '-') + '_' + f.filename
             base_bath = os.path.join(MEDIA_PATH, file_info['format'])
             if os.path.exists(base_bath) is False:

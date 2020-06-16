@@ -33,6 +33,6 @@ JWT_EXPIRE = 7*7*3600
 
 ACTIVE_EXPIRE = 10*60
 
-MEDIA_PREFIX = "http://47.99.51.135:8010/media"
+MEDIA_PREFIX = "http://47.99.51.135:8010/media/"
 
 SECRET_KEY = "7e41I1kCRN5Y*pw13Mc4%rPL0FSj%^tA"  # 使用session 必须加上

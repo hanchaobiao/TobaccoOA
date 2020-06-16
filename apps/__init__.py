@@ -6,14 +6,17 @@
 # @Software: PyCharm
 import os
 import sys
+
+import wtforms_json
 from flask_cors import *
-from flask import Flask, send_from_directory
+from flask import Flask
 from flask_restful import Api
 
-from common.exception import InvalidUsage
 from common.logger import logger
 from common.response import json_response
 
+
+wtforms_json.init()  # 解决json数据传入wtforms表单，取值问题，正常传入类型需要是{'name': ['han']}，因此使用此插件处理
 
 app = Flask(__name__, static_folder='../media', static_url_path='/local_media')
 
