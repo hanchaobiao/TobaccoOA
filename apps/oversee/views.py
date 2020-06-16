@@ -17,10 +17,8 @@ from apps.oversee.forms import AddOverseeTaskForm, UpdateOverseeTaskForm, Submit
 from module.OverseeTaskDb import OverseeTaskModel
 from module.AdminDb import AdminModel
 from common.response import json_response
-from apps.utils.db_transaction import db_transaction
 from apps.utils.jwt_login_decorators import admin_login_req
 from apps.utils.permissions_auth import allow_role_req
-from resources.redis_pool import RedisPool
 from apps.oversee.task import send_sys_message
 from apps.admin_operation.task import upload_file
 
@@ -34,13 +32,12 @@ class ReleaseOverseeTaskView(Resource):
     __table_desc__ = '督办任务'
 
     @staticmethod
-    # @admin_login_req
-    # @allow_role_req([1, 2, 3, 4])
+    @admin_login_req
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=str, help='任务名称', required=False, default=None)
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
-        parser.add_argument("status", type=str, help='执行状态', choices=['', '待签收', '待审核', '审核拒绝', '已完成'],
+        parser.add_argument("status", type=str, help='执行状态', choices=['', '待签收', '进行中', '任务完成'],
                             required=False, default=None)
         parser.add_argument("type", type=str, help='任务类型', choices=['', '重大任务', '专项任务', '普通任务', '常规状态'],
                             required=False, default=None)
@@ -54,9 +51,9 @@ class ReleaseOverseeTaskView(Resource):
         if args.get("id"):
             result = model.get_oversee_task_detail(args['id'])
         else:
-            request.user = {"role_id": 5}
-            result = model.get_oversee_task_list(request.user, args['name'], args['type'], args['relation'],
-                                                 args['department_id'], args['page'], args['page_size'])
+            result = model.get_oversee_task_list(request.user, args['name'], args['status'], args['type'],
+                                                 args['relation'], args['department_id'],
+                                                 args['page'], args['page_size'])
             if len(result['list']):
                 ids = model.get_all_people_ids(result['list'])
                 admin_list = AdminModel().get_admin_by_ids(ids)
@@ -411,6 +408,6 @@ class OverseeMessageTaskView(Resource):
         message_id = request.json['id']
         model = OverseeTaskModel()
         update_data = {"id": message_id, "receive_time": datetime.datetime.now()}
-        count = model.execute_update(self.__table__, update_data,
+        model.execute_update(self.__table__, update_data,
                                      extra_conditions=[f'receive_id={request.user["id"]}', 'receive_time is null'])
         return json_response(code=0, message="消息已读")

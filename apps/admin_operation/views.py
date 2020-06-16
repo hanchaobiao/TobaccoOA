@@ -463,7 +463,7 @@ class DepartmentNoticeView(Resource):
 
     __table__ = 'department_notice'
 
-    # @admin_login_req
+    @admin_login_req
     # @allow_role_req(role_ids=[4])
     def get(self):
         parser = reqparse.RequestParser()

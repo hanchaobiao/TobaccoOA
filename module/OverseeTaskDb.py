@@ -74,11 +74,12 @@ class OverseeTaskModel(BaseDb):
         task['task_detail_list'] = task_detail_list
         return task
 
-    def get_oversee_task_list(self, admin, name, task_type, relation, department_id, page, page_size):
+    def get_oversee_task_list(self, admin, name, status, task_type, relation, department_id, page, page_size):
         """
         任务列表
         :param admin:
         :param name:
+        :param status:
         :param task_type:
         :param relation:
         :param department_id:
@@ -100,7 +101,9 @@ class OverseeTaskModel(BaseDb):
         elif department_id is None and admin['role_id'] == 4:
             conditions.append(" oversee_task_detail.agent_id={} ".format(admin['id']))
         if department_id:
-             conditions.append(" oversee_task_detail.department_id={} ".format(department_id))
+            conditions.append(" oversee_task_detail.department_id={} ".format(department_id))
+        if status:
+            conditions.append("oversee_task.status='{}'".format(status))
         if name:
             conditions.append("oversee_task.name like '%{}%'".format(name))
         if task_type:
