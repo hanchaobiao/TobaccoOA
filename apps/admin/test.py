@@ -22,22 +22,15 @@ def login():
     测试登陆
     :return:
     """
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
-    }
-    response = requests.post(f"{web_url}/login", params={"username": "hancb", "password": "123456"}, headers=headers)
+
+    response = requests.post(f"{web_url}/login", params={"username": "hancb", "password": "666666"}, headers=headers)
     print(response.text)
     print(response.json())
+    headers['token'] = response.json()['data']['token']
     return response.json()['data']['token']
 
 
 # token = test_login()
-
-token = ''
-
-headers = {
-    "token": token
-}
 
 
 def update_password():

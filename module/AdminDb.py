@@ -306,7 +306,6 @@ class AdminModel(BaseDb):
         """
         sql = "SELECT sys_admin.id, sys_admin.real_name FROM sys_admin LEFT JOIN dict_department " \
               "ON department_id=dict_department.id WHERE sys_admin.is_delete=0 "
-        constraints = []
         if role_ids:
             sql += " AND role_id IN %s " % str(tuple(role_ids)).replace(",)", ")")
         if department_id:

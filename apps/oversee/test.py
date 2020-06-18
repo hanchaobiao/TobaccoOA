@@ -8,12 +8,14 @@ import os
 import datetime
 import requests
 
-from apps.admin.test import headers
-
+from apps.admin.test import headers, login
 
 web_url = "http://127.0.0.1:5001"
 
 # web_url = "http://47.99.51.135:8010"
+
+
+login()
 
 
 def task_release():

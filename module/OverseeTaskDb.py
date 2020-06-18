@@ -116,9 +116,11 @@ class OverseeTaskModel(BaseDb):
             conditions.append("oversee_task_detail.agent_id={}".format(admin['id']))
         elif relation == '由我协办':
             conditions.append("rel_task_coordinator.coordinator_id={}".format(admin['id']))
+
         sql = self.append_query_conditions(sql, conditions)
-        sql += " GROUP BY oversee_task.id"
-        result = self.query_paginate(sql, sort=['add_time', 'DESC'], page=page, page_size=page_size)
+
+        result = self.query_paginate(sql, sort=['add_time', 'DESC'], group_by=["oversee_task.id"],
+                                     page=page, page_size=page_size)
         if relation == '由我经办' or relation == '由我协办':  # 补气人员
             task_ids = [res['id'] for res in result['list']]
             if len(task_ids) == 0:

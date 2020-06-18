@@ -190,18 +190,24 @@ class BaseDb(object):
         self.dict_cur.executemany(sql, value_list)
         return self.dict_cur.lastrowid
 
-    def query_paginate(self, sql, *args, sort=[], page=None, page_size=10):
+    def query_paginate(self, sql, *args, sort=[], group_by=[], page=None, page_size=10):
         """
         查询
         :param sql:
         :param sort: [字段, 'asc']
+        :param group_by: [字段, 'asc']
         :param page:
         :param page_size:
         :return:
         """
         result = re.findall(".*(SELECT|select)(.*)(FROM|from).*", sql, re.S)
-        count_sql = sql.replace(result[0][1], ' COUNT(*) as number ')
 
+        if group_by:
+            count_sql = sql.replace(result[0][1], ' COUNT(DISTINCT {}) as number '.format(','.join(group_by)))
+            sql += " GROUP BY {} ".format(','.join(group_by))
+        else:
+            count_sql = sql.replace(result[0][1], ' COUNT(*) as number ')
+        print(count_sql)
         if sort:
             if isinstance(sort[0], tuple):
                 sql += " ORDER BY " + ','.join([" {} {} ".format(item[0], item[1]) for item in sort])
