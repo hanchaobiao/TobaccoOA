@@ -80,12 +80,12 @@ class ReportModel(BaseDb):
             elif row['name'] in all_gj_name:
                 gj.append(row)
                 gj_names.append(row['name'])
-        for name in all_section_name:
-            if name not in section_chief_names:
-                section_chief.append({"name": name, "value": 0})
-        for name in all_gj_name:
-            if name not in gj_names:
-                gj.append({"name": name, "value": 0})
+        # for name in all_section_name:
+        #     if name not in section_chief_names:
+        #         section_chief.append({"name": name, "value": 0})
+        # for name in all_gj_name:
+        #     if name not in gj_names:
+        #         gj.append({"name": name, "value": 0})
         return {"section_chief": section_chief, "gj": gj}
 
     def oversee_task_statistics(self, department_id):
