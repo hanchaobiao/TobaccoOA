@@ -200,7 +200,7 @@ class AdminManageView(Resource):
                 import traceback
                 traceback.print_exc()
                 model.conn.rollback()
-                return json_response(code="FAIL", message="修改失败", data={})
+                return json_response(code="FAIL", message="新增失败:{}".format(e), data={})
         else:
             return json_response(code="FAIL", message="表单验证异常", errors=form.errors)
 
@@ -228,7 +228,7 @@ class AdminManageView(Resource):
                     import traceback
                     traceback.print_exc()
                     model.conn.rollback()
-                    return json_response(code="FAIL", message="修改失败", data={})
+                    return json_response(code="FAIL", message="修改失败:{}".format(e), data={})
             else:
                 return json_response(code=1, message="用户不存在")
         else:
