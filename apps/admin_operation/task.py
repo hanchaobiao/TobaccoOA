@@ -20,7 +20,6 @@ def upload_file(dir_name, **kwargs):
     for f in request.files.getlist('file'):
         if allowed_file(f.filename) is False:
             return {"code": 1, "message": "文件格式不符合，只允许上传如下格式文件：{}".format(str(ALLOW_FILE_FORMAT))}
-    a = request
     for f in request.files.getlist('file'):
         content = f.read()
         file_info = dict()

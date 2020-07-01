@@ -95,11 +95,13 @@ class ReportModel(BaseDb):
         :return:
         """
         sql = """
-            SELECT status as name, COUNT(*) as value FROM (
-                SELECT task_id, CASE WHEN group_concat(DISTINCT status) = '任务完成' then '已完成' 
-                    WHEN group_concat(DISTINCT status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
-                    ELSE '进行中' END  as status 
-                FROM oversee_task_detail %s GROUP BY task_id
+            SELECT status as name, COUNT(DISTINCT id) as value FROM (
+                 SELECT oversee_task.id,
+                        CASE WHEN oversee_task.status='任务完成' then '已完成'
+                        WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+                        ELSE '进行中' END  as status
+                    FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id %s
+                    GROUP BY oversee_task.id
             ) AS tmp GROUP BY status"""
         if department_id:
             child_dict = DepartmentModel().get_child_department_by_ids(department_id)
@@ -122,14 +124,16 @@ class ReportModel(BaseDb):
         :return:
         """
         sql = """
-            SELECT DATE_FORMAT(add_time, '%Y-%m') as month, tmp.status as name, COUNT(*) as value 
-            FROM oversee_task JOIN (
-                SELECT task_id, CASE WHEN group_concat(DISTINCT status) = '任务完成' then '已完成' 
-                    WHEN group_concat(DISTINCT status) != '任务完成' AND max(end_time)<NOW() THEN '未完成'
-                    ELSE '进行中' END  as status 
-                FROM oversee_task_detail {} GROUP BY task_id
-            ) AS tmp ON oversee_task.id=tmp.task_id 
-            WHERE DATE_FORMAT(add_time, '%Y-%m')>DATE_FORMAT(date_sub(curdate(), interval 12 month), '%Y-%m')
+            SELECT month, tmp.status as name, COUNT(DISTINCT id) as value 
+            FROM (
+                SELECT DATE_FORMAT(add_time, '%Y-%m') as month, oversee_task.id,
+                        CASE WHEN oversee_task.status='任务完成' then '已完成'
+                        WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+                        ELSE '进行中' END  as status
+                    FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id 
+                    AND DATE_FORMAT(add_time, '%Y-%m')>DATE_FORMAT(date_sub(curdate(), interval 12 month), '%Y-%m') {}
+                    GROUP BY oversee_task.id 
+            ) AS tmp
             GROUP BY month, tmp.status"""
 
         if department_id:
@@ -162,16 +166,15 @@ class ReportModel(BaseDb):
         :return:
         """
         sql = """
-        SELECT type, status, COUNT(*) AS number FROM (
-            SELECT `type`,
-                CASE WHEN group_concat(DISTINCT d.status)='任务完成' then 'complete_num'
-                WHEN group_concat(DISTINCT d.status) != '任务完成' AND max(end_time)<NOW() THEN 'ongoing_num'
+        SELECT type, status, COUNT(DISTINCT id) AS number FROM (
+            SELECT oversee_task.id, `type`,
+                CASE WHEN oversee_task.status='任务完成' then 'complete_num'
+                WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN 'overdue_num'
                 ELSE 'ongoing_num' END  as status
             FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {}
-            GROUP BY oversee_task.id, `type`, d.status
+            GROUP BY oversee_task.id, `type`
         ) AS tmp GROUP BY `type`, status
         """
-
         if department_id:
             child_dict = DepartmentModel().get_child_department_by_ids(department_id)
             if child_dict:
@@ -186,7 +189,7 @@ class ReportModel(BaseDb):
                              "常规事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0}}
         for row in rows:
             oversee_type_dict[row['type']][row['status']] = row['number']
-            oversee_type_dict[row['type']][row['status']] += row['number']
+            oversee_type_dict[row['type']]['task_num'] += row['number']
         return oversee_type_dict
 
     def get_newest_tax(self):
@@ -205,25 +208,27 @@ class ReportModel(BaseDb):
         :return:
         """
         internal_sql = """
-            SELECT oversee_task.id, d.department_id, `type`, 
-            1 AS task_num, IF(group_concat(DISTINCT d.status)='任务完成', 1, NULL) as complete_num
-            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id
+            SELECT oversee_task.id, d.department_id, `type`, oversee_task.id as task_id, 
+            IF(oversee_task.status='任务完成', oversee_task.id, NULL) as complete_id
+            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id 
         """
         conditions = []
         if department_id:
-            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id, include_self=False)
             if child_dict:
                 conditions.append("d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
         if date:
             conditions.append("DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(date))
         internal_sql = self.append_query_conditions(internal_sql, conditions)
+
         sql = """
               SELECT department_id as id, dict_department.name, `type`, 
-                COUNT(task_num) as task_num, COUNT(complete_num) as complete_num, 
-                COUNT(complete_num)/COUNT(task_num) as complete_rate FROM (
+                COUNT(DISTINCT task_id) as task_num, COUNT(DISTINCT complete_id) as complete_num, 
+                COUNT(DISTINCT complete_id)/COUNT(DISTINCT task_id) as complete_rate FROM (
                     {}
                     GROUP BY oversee_task.id, d.department_id, `type`
-                ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id GROUP BY department_id, dict_department.name, `type`
+                ) AS tmp JOIN dict_department ON tmp.department_id=dict_department.id 
+                GROUP BY department_id, dict_department.name, `type`
                 """.format(internal_sql)
         self.dict_cur.execute(sql)
         rows = list(self.dict_cur.fetchall())
@@ -270,7 +275,6 @@ class ReportModel(BaseDb):
         else:
             sql = sql.format('')
             child_dict = DepartmentModel().get_child_department_by_ids(None)
-        print(sql)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         if len(rows) == 0:
@@ -332,7 +336,7 @@ class ReportModel(BaseDb):
         """
         sql = "SELECT id, name, wish_content, status, submit_content, submit_time, give_like_num, " \
               "DATEDIFF(submit_time, add_time) as cost_day FROM employee_wish " \
-              "order by give_like_num desc, add_time desc"
+              "WHERE status = '心愿完成' order by give_like_num desc, add_time desc"
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         return {"count": len(rows), "list": rows}

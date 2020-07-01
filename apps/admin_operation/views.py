@@ -478,7 +478,7 @@ class DepartmentNoticeView(Resource):
         return json_response(data=tax)
 
     @admin_login_req
-    @allow_role_req([4])
+    @allow_role_req([1, 4])
     def post(self):
         form = AddDepartmentNoticeForm().from_json(request.json)
         if form.validate():
@@ -493,7 +493,7 @@ class DepartmentNoticeView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
-    @allow_role_req([4])
+    @allow_role_req([1, 4])
     def put(self):
         form = UpdateDepartmentNoticeForm().from_json(request.json)
         if form.validate():
@@ -507,7 +507,7 @@ class DepartmentNoticeView(Resource):
             return json_response(code=1, errors=form.errors)
 
     @admin_login_req
-    @allow_role_req([4])
+    @allow_role_req([1, 4])
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument("id", type=int, help='公告id', required=False)

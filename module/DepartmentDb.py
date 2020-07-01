@@ -97,10 +97,11 @@ class DepartmentModel(BaseDb):
         department = self.dict_cur.fetchone()
         return department
 
-    def get_child_department_by_ids(self, department_id):
+    def get_child_department_by_ids(self, department_id, include_self=True):
         """
         获取部门
         :param department_id:
+        :param include_self:
         :return:
         """
         sql = "SELECT id, name FROM dict_department"
@@ -109,7 +110,7 @@ class DepartmentModel(BaseDb):
                    "or path like '%,{pid},%' or path like '%,{pid}')".format(pid=department_id)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
-        child_dict = {row['id']: row for row in rows}
+        child_dict = {row['id']: row for row in rows if include_self or row['id'] != department_id}
         return child_dict
 
     def get_department_by_name(self, name):

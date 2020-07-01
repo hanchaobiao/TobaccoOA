@@ -20,7 +20,7 @@ class BaseDb(object):
         :param table_name:
         :return:
         """
-        sql = "SELECT column_name, column_comment FROM INFORMATION_SCHEMA.Columns " \
+        sql = "SELECT COLUMN_NAME, COLUMN_COMMENT FROM INFORMATION_SCHEMA.Columns " \
               "where table_name=%s and table_schema=%s"
         self.dict_cur.execute(sql, (table_name, MYSQL['db']))
         rows = self.dict_cur.fetchall()
