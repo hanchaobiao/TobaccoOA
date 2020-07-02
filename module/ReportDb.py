@@ -67,26 +67,21 @@ class ReportModel(BaseDb):
             sql = sql.format('')
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
-        all_section_name = ['科长', '经理', '主任', '主任科员', '副科长', '副经理', '副主任科员', '副主任']
+        all_section_name = ['科长', '经理', '主任', '主任科员', '副科长', '副经理', '副主任科员', '副主任',
+                            '正股', '副股', '普通员工']
         section_chief = []
         section_chief_names = set()
-        all_gj_name = ['正股', '副股', '普通员工']
-        gj = []
-        gj_names = []
         for row in rows:
             if row['name'] in all_section_name:
                 section_chief.append(row)
                 section_chief_names.add(row['name'])
-            elif row['name'] in all_gj_name:
-                gj.append(row)
-                gj_names.append(row['name'])
         # for name in all_section_name:
         #     if name not in section_chief_names:
         #         section_chief.append({"name": name, "value": 0})
         # for name in all_gj_name:
         #     if name not in gj_names:
         #         gj.append({"name": name, "value": 0})
-        return {"section_chief": section_chief, "gj": gj}
+        return {"section_chief": section_chief}
 
     def oversee_task_statistics(self, department_id):
         """
@@ -298,23 +293,30 @@ class ReportModel(BaseDb):
         年度重点事务
         :return:
         """
-        sql = "SELECT oversee_task.name, DATE_FORMAT(oversee_task.add_time, '%Y-%m-%d') as date, " \
-              "real_name as oversee_name, dict_department.name as department_name " \
-              "FROM oversee_task JOIN sys_admin ON oversee_id=sys_admin.id " \
-              "JOIN dict_department ON department_id=dict_department.id " \
-              "WHERE oversee_task.`type`='重大事务' "
+        sql = """
+            SELECT oversee_task.name, DATE_FORMAT(oversee_task.add_time, '%%Y-%%m-%%d') as date,
+            GROUP_CONCAT(real_name) as agent_name, GROUP_CONCAT(dict_department.`name`) as department_name
+            FROM oversee_task JOIN oversee_task_detail ON oversee_task.`type`='重大事务' 
+                AND oversee_task.id=oversee_task_detail.task_id %s {}
+            JOIN sys_admin ON oversee_task_detail.agent_id=sys_admin.id
+            JOIN dict_department ON oversee_task_detail.department_id=dict_department.id 
+            GROUP BY oversee_task.id, oversee_task.name, oversee_task.add_time
+        """
+        if year:
+            sql = sql % " AND DATE_FORMAT(oversee_task.add_time, '%%Y')='{}'".format(year)
+        elif year_month:
+            sql = sql % " AND DATE_FORMAT(oversee_task.add_time, '%%Y-%%m')='{}'".format(year_month)
+        else:
+            sql = sql % ''
         if department_id:
             child_dict = DepartmentModel().get_child_department_by_ids(department_id)
             if child_dict:
-                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+                sql = sql.format(" AND oversee_task_detail.department_id IN %s "
+                                 % (str(tuple(child_dict.keys())).replace(",)", ")")))
         else:
             sql = sql.format('')
-
-        if year:
-            sql += " DATE_FORMAT(oversee_task.add_time, '%Y')='{}'".format(year)
-        elif year_month:
-            sql += " DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(year_month)
         sql += " ORDER BY oversee_task.add_time desc "
+        print(sql)
         self.dict_cur.execute(sql)
         rows = self.dict_cur.fetchall()
         return rows

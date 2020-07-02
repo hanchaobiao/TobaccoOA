@@ -435,7 +435,7 @@ class TaxProgressView(Resource):
     __table__ = 'tax_progress'
 
     @admin_login_req
-    @allow_role_req([1, 2, 3])
+    @allow_role_req([1, 2, 3, 4])
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument("year", type=int, help='年份必填', required=True)

@@ -25,6 +25,7 @@ def allow_role_req(role_ids=[1]):
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
             admin = request.user
+            print(admin)
             if admin['role_id'] not in role_ids:
                 return json_response(code=1, message="权限不足")
             return method(*args, **kwargs)
