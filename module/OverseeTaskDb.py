@@ -74,7 +74,8 @@ class OverseeTaskModel(BaseDb):
         task['task_detail_list'] = task_detail_list
         return task
 
-    def get_oversee_task_list(self, admin, name, status, task_type, relation, department_id, page, page_size):
+    def get_oversee_task_list(self, admin, name, status, task_type, relation, department_id,
+                              is_dp, start_date, end_date, page, page_size):
         """
         任务列表
         :param admin:
@@ -83,6 +84,9 @@ class OverseeTaskModel(BaseDb):
         :param task_type:
         :param relation:
         :param department_id:
+        :param is_dp:
+        :param start_date:
+        :param end_date:
         :param page:
         :param page_size:
         :return:
@@ -91,14 +95,15 @@ class OverseeTaskModel(BaseDb):
         SELECT oversee_task.*, 
           GROUP_CONCAT(DISTINCT oversee_task_detail.agent_id order by oversee_task_detail.id) as agent_ids, 
           GROUP_CONCAT(DISTINCT rel_task_coordinator.coordinator_id order by oversee_task_detail.id) as coordinator_ids 
-        FROM oversee_task LEFT JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id
+        FROM oversee_task LEFT JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id 
+            AND oversee_task.add_time BETWEEN '{}' AND '{}'
         LEFT JOIN rel_task_coordinator ON oversee_task_detail.id=rel_task_coordinator.task_detail_id
-        """
+        """.format(start_date, end_date)
         conditions = []
         # department_id 不为空认为是从大屏进入的
-        if department_id is None and admin['role_id'] == 3:
+        if is_dp is False and admin['role_id'] == 3:
             conditions.append(" oversee_task.oversee_id={} ".format(admin['id']))
-        elif department_id is None and admin['role_id'] == 4:
+        if is_dp is False and admin['role_id'] == 4:
             conditions.append(" oversee_task_detail.agent_id={} ".format(admin['id']))
         if department_id:
             conditions.append(" oversee_task_detail.department_id={} ".format(department_id))
@@ -116,7 +121,6 @@ class OverseeTaskModel(BaseDb):
             conditions.append("oversee_task_detail.agent_id={}".format(admin['id']))
         elif relation == '由我协办':
             conditions.append("rel_task_coordinator.coordinator_id={}".format(admin['id']))
-
         sql = self.append_query_conditions(sql, conditions)
 
         result = self.query_paginate(sql, sort=['add_time', 'DESC'], group_by=["oversee_task.id"],

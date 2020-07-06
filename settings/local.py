@@ -17,6 +17,15 @@ MYSQL = {
 }
 
 
+# MYSQL = {
+#     "db": "tobacco_office",
+#     "host": "47.105.138.133",
+#     "port": 3306,
+#     "user": "root",
+#     "passwd": "bjmrkj_2019",
+# }
+
+
 REDIS = {
         "host": "47.105.138.133",
         "port": "6379",

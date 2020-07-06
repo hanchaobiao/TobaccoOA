@@ -43,7 +43,10 @@ class ReleaseOverseeTaskView(Resource):
                             required=False, default=None)
         parser.add_argument("relation", type=str, help='任务关系', choices=['', '由我发布', '由我经办', '由我督办', '由我协办'],
                             required=False, default=None)
-        parser.add_argument("department_id", type=int, help='经办部门，从大屏进入', required=False, default=None)
+        parser.add_argument("department_id", type=str, help='经办部门，从大屏进入', required=False, default=None)
+        parser.add_argument("is_dp", type=bool, help='开始日期', required=False, default=True)
+        parser.add_argument("start_date", type=str, help='开始日期', required=True, default=None)
+        parser.add_argument("end_date", type=str, help='结束日期', required=True, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)
         parser.add_argument("page_size", type=int, help='页数', required=False, default=20)
         args = parser.parse_args()
@@ -52,8 +55,9 @@ class ReleaseOverseeTaskView(Resource):
             result = model.get_oversee_task_detail(args['id'])
         else:
             result = model.get_oversee_task_list(request.user, args['name'], args['status'], args['type'],
-                                                 args['relation'], args['department_id'],
-                                                 args['page'], args['page_size'])
+                                                 args['relation'], args['department_id'], args['is_dp'],
+                                                 args['start_date'],
+                                                 args['end_date'], args['page'], args['page_size'])
             if len(result['list']):
                 ids = model.get_all_people_ids(result['list'])
                 admin_list = AdminModel().get_admin_by_ids(ids)

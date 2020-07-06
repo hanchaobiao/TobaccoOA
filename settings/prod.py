@@ -5,7 +5,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 生产环境数据查询服务配置
 API_HOST = "0.0.0.0"
-API_PORT = 5000
+API_PORT = 5001
 API_DEBUG = False    # 调试模式，即修改代码后立马响应，无需重启服务，但是不能用于生产环境
 
 # 日志级别
