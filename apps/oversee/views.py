@@ -39,7 +39,7 @@ class ReleaseOverseeTaskView(Resource):
         parser.add_argument("name", type=str, help='任务名称', required=False, default=None)
         parser.add_argument("status", type=str, help='执行状态', choices=['', '待签收', '进行中', '任务完成'],
                             required=False, default=None)
-        parser.add_argument("type", type=str, help='任务类型', choices=['', '重大任务', '专项任务', '普通任务', '常规状态'],
+        parser.add_argument("type", type=str, help='事务类型', choices=['', '重大事务', '专项事务', '普通事务', '常规事务'],
                             required=False, default=None)
         parser.add_argument("relation", type=str, help='任务关系', choices=['', '由我发布', '由我经办', '由我督办', '由我协办'],
                             required=False, default=None)
