@@ -17,10 +17,9 @@ class ReportModel(BaseDb):
     def __init__(self):
         BaseDb.__init__(self)
 
-    def get_employee_status(self, department_id):
+    def get_employee_status(self):
         """
         统计员工状态
-        :param department_id:
         :return:
         """
         # result = {'work_state': [{"status": "退岗", "num": 0}, {"status": "内退", "num": 0},
