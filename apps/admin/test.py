@@ -23,7 +23,7 @@ def login():
     :return:
     """
 
-    response = requests.post(f"{web_url}/login", params={"username": "hancb", "password": "666666"}, headers=headers)
+    response = requests.post(f"{web_url}/login", params={"username": "xyycdb", "password": "123456"}, headers=headers)
     print(response.text)
     print(response.json())
     headers['token'] = response.json()['data']['token']

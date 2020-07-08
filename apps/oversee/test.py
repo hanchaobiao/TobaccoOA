@@ -24,7 +24,7 @@ def task_release():
     :return:
     """
 
-    data = {}
+    data = {"is_dp": 0}
     response = requests.get(f"{web_url}/task/release", headers=headers, params=data)
     print(response.text)
 

@@ -44,7 +44,7 @@ class ReleaseOverseeTaskView(Resource):
         parser.add_argument("relation", type=str, help='任务关系', choices=['', '由我发布', '由我经办', '由我督办', '由我协办'],
                             required=False, default=None)
         parser.add_argument("department_id", type=str, help='经办部门，从大屏进入', required=False, default=None)
-        parser.add_argument("is_dp", type=bool, help='开始日期', required=False, default=True)
+        parser.add_argument("is_dp", type=int, help='是否大屏', required=False, default=1)
         parser.add_argument("start_date", type=str, help='开始日期', required=False, default=None)
         parser.add_argument("end_date", type=str, help='结束日期', required=False, default=None)
         parser.add_argument("page", type=int, help='页码', required=False, default=1)

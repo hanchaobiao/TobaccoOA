@@ -101,9 +101,9 @@ class OverseeTaskModel(BaseDb):
         """.format(start_date, end_date)
         conditions = []
         # department_id 不为空认为是从大屏进入的
-        if is_dp is False and admin['role_id'] == 3:
+        if is_dp != 1 and admin['role_id'] == 3:
             conditions.append(" oversee_task.oversee_id={} ".format(admin['id']))
-        if is_dp is False and admin['role_id'] == 4:
+        if is_dp != 1 and admin['role_id'] == 4:
             conditions.append(" oversee_task_detail.agent_id={} ".format(admin['id']))
         if department_id:
             conditions.append(" oversee_task_detail.department_id={} ".format(department_id))
