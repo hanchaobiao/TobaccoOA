@@ -77,13 +77,13 @@ class UpdateScheduleEventForm(Form):
     end_date = StringField("结束时间", validators=[DataRequired(message="结束时间不能为空")])
 
 
-class TaxProgressForm(Form):
+class UpdateTaxProgressForm(Form):
     """
     税率
     """
     complete_tax_money = DecimalField("完成税额",  places=10, rounding=2)
     total_tax_money = DecimalField("模板税额", places=10, rounding=2)
-    year = IntegerField("年份")
+    year = IntegerField("年份", validators=[NumberRange(min=1900, max=2100)])
 
 
 class AddDepartmentNoticeForm(Form):

@@ -14,7 +14,7 @@ from flask import request, make_response
 from flask_restful import Resource, reqparse
 from apps import MEDIA_PATH
 from apps.admin_operation.forms import AddDepartmentForm, UpdateDepartmentForm, AddMemoEventForm, UpdateMemoEventForm,\
-    AddScheduleEventForm, UpdateScheduleEventForm, TaxProgressForm, AddDepartmentNoticeForm, UpdateDepartmentNoticeForm
+    AddScheduleEventForm, UpdateScheduleEventForm, UpdateTaxProgressForm, AddDepartmentNoticeForm, UpdateDepartmentNoticeForm
 from module.AdminDb import AdminModel
 from module.AdminOperateDb import AdminOperateModel
 from module.DepartmentDb import DepartmentModel
@@ -448,7 +448,7 @@ class TaxProgressView(Resource):
     def put(self):
         if request.user['department_name'] != '财务管理科':
             return json_response(code=0, message="非财务科不能编辑")
-        form = TaxProgressForm()
+        form = UpdateTaxProgressForm().from_json(request.json)
         if form.validate():
             tax = AdminOperateModel().replace_tax_progress(form.data)
             return json_response(data=tax)

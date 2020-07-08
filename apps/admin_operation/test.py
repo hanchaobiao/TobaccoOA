@@ -10,9 +10,9 @@ import requests
 from apps.admin.test import headers
 
 
-# web_url = "http://127.0.0.1:5001"
+web_url = "http://127.0.0.1:5001"
 
-web_url = "http://47.99.51.135:8010"
+# web_url = "http://47.99.51.135:8010"
 
 
 def department_test():
@@ -62,7 +62,18 @@ def delete_admin():
     print(response.text)
 
 
+def tax():
+    """
+    测试导入员工数据
+    :return:
+    """
+    data = {"year": 2020, "complete_tax_money": 100, "total_tax_money": 200}
+    response = requests.put(f"{web_url}/taxProgress", headers=headers, json=data)
+    print(response.text)
+
+
 if __name__ == "__main__":
-    department_test()
+    # department_test()
     # upload_file()
     # get_file_list()
+    tax()
