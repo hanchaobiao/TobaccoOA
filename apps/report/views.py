@@ -17,11 +17,11 @@ class EmployeeStatusReportView(Resource):
 
     @staticmethod
     def get():
-        parser = reqparse.RequestParser()
-        parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
-        args = parser.parse_args()
+        # parser = reqparse.RequestParser()
+        # parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        # args = parser.parse_args()
         model = ReportModel()
-        result = model.get_employee_status(args['department_id'])
+        result = model.get_employee_status()
         return json_response(data=result)
 
 
@@ -49,9 +49,10 @@ class TaskCompleteSituationView(Resource):
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        parser.add_argument("year_month", type=str, help='年月', required=False, default=None)
         args = parser.parse_args()
         model = ReportModel()
-        result = model.oversee_task_statistics(args['department_id'])
+        result = model.oversee_task_statistics(args['department_id'], args['year_month'])
         return json_response(data=result)
 
 
@@ -79,9 +80,10 @@ class TaskTypeCompleteSituationView(Resource):
     def get():
         parser = reqparse.RequestParser()
         parser.add_argument("department_id", type=int, help='部门id', required=False, default=2)
+        parser.add_argument("year_month", type=str, help='年月', required=False, default=None)
         args = parser.parse_args()
         model = ReportModel()
-        result = model.oversee_type_complete_situation(args['department_id'])
+        result = model.oversee_type_complete_situation(args['department_id'], args['year_month'])
         return json_response(data=result)
 
 

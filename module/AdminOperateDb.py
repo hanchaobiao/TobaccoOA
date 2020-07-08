@@ -107,6 +107,26 @@ class AdminOperateModel(BaseDb):
         years = self.dict_cur.fetchall()
         return {"tax": row, "years": years}
 
+    def get_employee_status(self):
+        """
+        员工状态数据
+        :return:
+        """
+        sql = "SELECT * FROM employee_status LIMIT 1"
+        self.dict_cur.execute(sql)
+        row = self.dict_cur.fetchone()
+        return row
+
+    def update_employee_status(self, data):
+        """
+        员工状态数据
+        :param data:
+        :return:
+        """
+        sql = "UPDATE employee_status SET nt=%s, tx=%s, gf=%s, zg=%s"
+        count = self.dict_cur.execute(sql, (data['nt'], data['tx'], data['gf'], data['zg']))
+        return count
+
     def replace_tax_progress(self, data):
         """
         完成税率

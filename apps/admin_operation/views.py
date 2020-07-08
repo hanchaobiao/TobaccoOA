@@ -456,6 +456,37 @@ class TaxProgressView(Resource):
             return json_response(code=1, errors=form.errors)
 
 
+class EmployeeStatusView(Resource):
+    """
+    员工状态统计填写
+    """
+
+    __table__ = 'employee_status'
+
+    @admin_login_req
+    @allow_role_req([1, 2, 3, 4])
+    def get(self):
+        data = AdminOperateModel().get_employee_status()
+        return json_response(data=data)
+
+    @admin_login_req
+    @allow_role_req([1, 2, 3, 4])
+    def put(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("nt", type=int, help='内退', required=True)
+        parser.add_argument("tx", type=int, help='退休', required=True)
+        parser.add_argument("gf", type=int, help='改非', required=True)
+        parser.add_argument("zg", type=int, help='在岗', required=True)
+        args = parser.parse_args()
+        if request.user['department_name'] != '人事管理科':
+            return json_response(code=0, message="非财务科不能编辑")
+        model = AdminOperateModel()
+        origin_data = model.get_employee_status()
+        model.update_employee_status(args)
+        model.update_log(self.__table__, None, "修改员工状态数据", origin_data, args)
+        return json_response(data=args)
+
+
 class DepartmentNoticeView(Resource):
     """
     部门通知

@@ -23,32 +23,36 @@ class ReportModel(BaseDb):
         :param department_id:
         :return:
         """
-
-        result = {'work_state': [{"status": "退岗", "num": 0}, {"status": "内退", "num": 0},
-                                 {"status": "退休", "num": 0}, {"status": "改非", "num": 0}],
-                  'job_type': [{"status": '在岗正式工', "num": 0},
-                               {"status": '在岗人事代理', "num": 0},
-                               {"status": '在岗劳务派遣', "num": 0}]}
-        sql = "SELECT status, COUNT(id) as num FROM sys_admin WHERE is_delete=0 {} GROUP BY status"
-        if department_id:
-            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
-            if child_dict:
-                sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
-        else:
-            sql = sql.format('')
+        # result = {'work_state': [{"status": "退岗", "num": 0}, {"status": "内退", "num": 0},
+        #                          {"status": "退休", "num": 0}, {"status": "改非", "num": 0}],
+        #           'job_type': [{"status": '在岗正式工', "num": 0},
+        #                        {"status": '在岗人事代理', "num": 0},
+        #                        {"status": '在岗劳务派遣', "num": 0}]}
+        # sql = "SELECT status, COUNT(id) as num FROM sys_admin WHERE is_delete=0 {} GROUP BY status"
+        # if department_id:
+        #     child_dict = DepartmentModel().get_child_department_by_ids(department_id)
+        #     if child_dict:
+        #         sql = sql.format(" AND department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        # else:
+        #     sql = sql.format('')
+        # self.dict_cur.execute(sql)
+        # rows = self.dict_cur.fetchall()
+        # sum_num = 0
+        # for row in rows:
+        #     for item in result['work_state']:
+        #         if row['status'] == item['status']:
+        #             item['num'] = row['num']
+        #     for item in result['job_type']:
+        #         if row['status'] == item['status']:
+        #             item['num'] = row['num']
+        #     if '在岗' in row['status']:
+        #         sum_num += row['num']
+        # result['work_state'].append({"status": "在岗", "num": sum_num})
+        sql = "SELECT * FROM employee_status LIMIT 1"
         self.dict_cur.execute(sql)
-        rows = self.dict_cur.fetchall()
-        sum_num = 0
-        for row in rows:
-            for item in result['work_state']:
-                if row['status'] == item['status']:
-                    item['num'] = row['num']
-            for item in result['job_type']:
-                if row['status'] == item['status']:
-                    item['num'] = row['num']
-            if '在岗' in row['status']:
-                sum_num += row['num']
-        result['work_state'].append({"status": "在岗", "num": sum_num})
+        row = self.dict_cur.fetchone()
+        result = {'work_state': [{"status": "内退", "num": row['nt']}, {"status": "退休", "num": row['tx']},
+                                 {"status": "改非", "num": row['gf']}, {"status": "在岗", "num": row['tg']}]}
         return result
 
     def get_leader_statistics(self, department_id):
@@ -83,27 +87,34 @@ class ReportModel(BaseDb):
         #         gj.append({"name": name, "value": 0})
         return {"section_chief": section_chief}
 
-    def oversee_task_statistics(self, department_id):
+    def oversee_task_statistics(self, department_id, year_month):
         """
         督办任务完成情况统计
         :param department_id:
+        :param year_month:
         :return:
         """
+        internal_sql = """
+            SELECT oversee_task.id,
+                CASE WHEN oversee_task.status='任务完成' then '已完成'
+                WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN '未完成'
+                ELSE '进行中' END  as status
+            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id
+        """
+        conditions = []
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id, include_self=False)
+            if child_dict:
+                conditions.append("d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        if year_month:
+            conditions.append("DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(year_month))
+        internal_sql = self.append_query_conditions(internal_sql, conditions)
+
         sql = """
             SELECT status as name, COUNT(DISTINCT id) as value FROM (
-                 SELECT oversee_task.id,
-                        CASE WHEN oversee_task.status='任务完成' then '已完成'
-                        WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN '未完成'
-                        ELSE '进行中' END  as status
-                    FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id %s
+                    {}
                     GROUP BY oversee_task.id
-            ) AS tmp GROUP BY status"""
-        if department_id:
-            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
-            if child_dict:
-                sql = sql % " WHERE department_id IN {}".format(str(tuple(child_dict.keys())).replace(",)", ")"))
-        else:
-            sql = sql % ''
+            ) AS tmp GROUP BY status""".format(internal_sql)
         self.dict_cur.execute(sql)
         rows = list(self.dict_cur.fetchall())
         status_list = [row['name'] for row in rows]
@@ -154,28 +165,36 @@ class ReportModel(BaseDb):
             data_list.append({"name": name, "data": data})
         return {"x_axis": axis, "y_axis": data_list}
 
-    def oversee_type_complete_situation(self, department_id):
+    def oversee_type_complete_situation(self, department_id, year_month):
         """
         事务分类完成情况
         :param department_id:
+        :param year_month:
         :return:
         """
-        sql = """
-        SELECT type, status, COUNT(DISTINCT id) AS number FROM (
+        internal_sql = """
             SELECT oversee_task.id, `type`,
                 CASE WHEN oversee_task.status='任务完成' then 'complete_num'
                 WHEN oversee_task.status != '任务完成' AND max(end_time)<NOW() THEN 'overdue_num'
                 ELSE 'ongoing_num' END  as status
-            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id {}
+            FROM oversee_task JOIN oversee_task_detail d ON oversee_task.id=d.task_id
+        """
+        conditions = []
+        if department_id:
+            child_dict = DepartmentModel().get_child_department_by_ids(department_id, include_self=False)
+            if child_dict:
+                conditions.append("d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
+        if year_month:
+            conditions.append("DATE_FORMAT(oversee_task.add_time, '%Y-%m')='{}'".format(year_month))
+        internal_sql = self.append_query_conditions(internal_sql, conditions)
+
+        sql = """
+        SELECT type, status, COUNT(DISTINCT id) AS number FROM (
+            {}
             GROUP BY oversee_task.id, `type`
         ) AS tmp GROUP BY `type`, status
-        """
-        if department_id:
-            child_dict = DepartmentModel().get_child_department_by_ids(department_id)
-            if child_dict:
-                sql = sql.format(" WHERE d.department_id IN %s " % (str(tuple(child_dict.keys())).replace(",)", ")")))
-        else:
-            sql = sql.format('')
+        """.format(internal_sql)
+
         self.dict_cur.execute(sql)
         rows = list(self.dict_cur.fetchall())
         oversee_type_dict = {"专项事务": {"task_num": 0, "complete_num": 0, "ongoing_num": 0, "overdue_num": 0},
