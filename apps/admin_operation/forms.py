@@ -83,7 +83,7 @@ class TaxProgressForm(Form):
     """
     complete_tax_money = DecimalField("完成税额",  places=10, rounding=2)
     total_tax_money = DecimalField("模板税额", places=10, rounding=2)
-    year = IntegerField("年份", validators=[NumberRange(min=1900, max=2100)])
+    year = IntegerField("年份")
 
 
 class AddDepartmentNoticeForm(Form):
