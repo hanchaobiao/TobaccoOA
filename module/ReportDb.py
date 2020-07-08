@@ -51,7 +51,7 @@ class ReportModel(BaseDb):
         self.dict_cur.execute(sql)
         row = self.dict_cur.fetchone()
         result = {'work_state': [{"status": "内退", "num": row['nt']}, {"status": "退休", "num": row['tx']},
-                                 {"status": "改非", "num": row['gf']}, {"status": "在岗", "num": row['tg']}]}
+                                 {"status": "改非", "num": row['gf']}, {"status": "在岗", "num": row['zg']}]}
         return result
 
     def get_leader_statistics(self, department_id):
