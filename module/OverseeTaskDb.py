@@ -95,7 +95,7 @@ class OverseeTaskModel(BaseDb):
         SELECT oversee_task.*, 
           GROUP_CONCAT(DISTINCT oversee_task_detail.agent_id order by oversee_task_detail.id) as agent_ids, 
           GROUP_CONCAT(DISTINCT rel_task_coordinator.coordinator_id order by oversee_task_detail.id) as coordinator_ids 
-        FROM oversee_task LEFT JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id 
+        FROM oversee_task JOIN oversee_task_detail ON oversee_task.id=oversee_task_detail.task_id 
             AND oversee_task.add_time BETWEEN '{}' AND '{}'
         LEFT JOIN rel_task_coordinator ON oversee_task_detail.id=rel_task_coordinator.task_detail_id
         """.format(start_date, end_date)
@@ -122,7 +122,7 @@ class OverseeTaskModel(BaseDb):
         elif relation == '由我协办':
             conditions.append("rel_task_coordinator.coordinator_id={}".format(admin['id']))
         sql = self.append_query_conditions(sql, conditions)
-
+        print(sql)
         result = self.query_paginate(sql, sort=['add_time', 'DESC'], group_by=["oversee_task.id"],
                                      page=page, page_size=page_size)
         if relation == '由我经办' or relation == '由我协办':  # 补气人员
