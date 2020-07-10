@@ -123,8 +123,8 @@ class AdminOperateModel(BaseDb):
         :param data:
         :return:
         """
-        sql = "UPDATE employee_status SET nt=%s, tx=%s, gf=%s, zg=%s"
-        count = self.dict_cur.execute(sql, (data['nt'], data['tx'], data['gf'], data['zg']))
+        sql = "UPDATE employee_status SET ltx=%s, gnt=%s, zg=%s"
+        count = self.dict_cur.execute(sql, (data['ltx'], data['gnt'], data['zg']))
         return count
 
     def replace_tax_progress(self, data):

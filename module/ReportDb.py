@@ -50,8 +50,9 @@ class ReportModel(BaseDb):
         sql = "SELECT * FROM employee_status LIMIT 1"
         self.dict_cur.execute(sql)
         row = self.dict_cur.fetchone()
-        result = {'work_state': [{"status": "内退", "num": row['nt']}, {"status": "退休", "num": row['tx']},
-                                 {"status": "改非", "num": row['gf']}, {"status": "在岗", "num": row['zg']}]}
+        result = {'work_state': [{"status": "离、退休", "num": row['ltx']},
+                                 {"status": "改非、内退、退岗", "num": row['gnt']},
+                                 {"status": "在岗", "num": row['zg']}]}
         return result
 
     def get_leader_statistics(self, department_id):

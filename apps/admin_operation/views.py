@@ -473,9 +473,8 @@ class EmployeeStatusView(Resource):
     @allow_role_req([1, 2, 3, 4])
     def put(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("nt", type=int, help='内退', required=True)
-        parser.add_argument("tx", type=int, help='退休', required=True)
-        parser.add_argument("gf", type=int, help='改非', required=True)
+        parser.add_argument("ltx", type=int, help='离、退休', required=True)
+        parser.add_argument("gnt", type=int, help='改非、内退、退岗', required=True)
         parser.add_argument("zg", type=int, help='在岗', required=True)
         args = parser.parse_args()
         if request.user['department_name'] != '人事管理科':
